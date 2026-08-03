@@ -23,7 +23,11 @@ const app = express();
 
 // Security & parsing
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+const allowedOrigins = [process.env.CLIENT_URL, 'http://localhost:3000', 'http://localhost:3001'];
+app.use(cors({
+  origin: (origin, cb) => cb(null, !origin || allowedOrigins.includes(origin)),
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

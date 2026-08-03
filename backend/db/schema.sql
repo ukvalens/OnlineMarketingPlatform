@@ -29,7 +29,7 @@ CREATE TABLE users (
 -- Services
 CREATE TABLE services (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name VARCHAR(200) NOT NULL,
+  name VARCHAR(200) UNIQUE NOT NULL,
   description TEXT,
   category VARCHAR(100),
   is_active BOOLEAN DEFAULT TRUE,
