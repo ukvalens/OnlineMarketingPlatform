@@ -1,0 +1,101 @@
+const router = require('express').Router();
+const { body } = require('express-validator');
+const pool = require('../../config/db');
+const authenticate = require('../../middleware/authenticate');
+const authorize = require('../../middleware/authorize');
+const optionalAuth = require('../../middleware/optionalAuth');
+const validate = require('../../middleware/validate');
+const upload = require('../../config/multer');
+
+const slugify = (text) =>
+  text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+// GET /api/blog — visitor + all authenticated roles
+router.get('/', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+    const { rows } = await pool.query(
+      `SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image, b.published_at, u.name AS author
+       FROM blog_posts b JOIN users u ON u.id=b.author_id
+       WHERE b.status='published' ORDER BY b.published_at DESC LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/blog/:slug — visitor + all authenticated roles
+router.get('/:slug', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT b.*, u.name AS author FROM blog_posts b JOIN users u ON u.id=b.author_id
+       WHERE b.slug=$1 AND b.status='published'`,
+      [req.params.slug]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Post not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/blog — editor/admin
+router.post(
+  '/',
+  authenticate,
+  authorize('editor', 'admin'),
+  upload.single('cover_image'),
+  [body('title').trim().notEmpty(), body('body').notEmpty()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { title, body: postBody, excerpt, status = 'draft' } = req.body;
+      const slug = slugify(title) + '-' + Date.now();
+      const cover_image = req.file ? `/uploads/${req.file.filename}` : null;
+      const published_at = status === 'published' ? new Date() : null;
+      const { rows } = await pool.query(
+        `INSERT INTO blog_posts (title, slug, body, excerpt, cover_image, author_id, status, published_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+        [title, slug, postBody, excerpt, cover_image, req.user.id, status, published_at]
+      );
+      res.status(201).json(rows[0]);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// PUT /api/blog/:id — editor/admin
+router.put('/:id', authenticate, authorize('editor', 'admin'), upload.single('cover_image'), async (req, res, next) => {
+  try {
+    const { title, body: postBody, excerpt, status } = req.body;
+    const cover_image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const { rows } = await pool.query(
+      `UPDATE blog_posts SET
+        title=COALESCE($1,title), body=COALESCE($2,body), excerpt=COALESCE($3,excerpt),
+        cover_image=COALESCE($4,cover_image), status=COALESCE($5,status),
+        published_at=CASE WHEN $5='published' AND status='draft' THEN NOW() ELSE published_at END,
+        updated_at=NOW()
+       WHERE id=$6 RETURNING *`,
+      [title, postBody, excerpt, cover_image, status, req.params.id]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/blog/:id — admin only
+router.delete('/:id', authenticate, authorize('admin'), async (req, res, next) => {
+  try {
+    await pool.query('DELETE FROM blog_posts WHERE id=$1', [req.params.id]);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;
