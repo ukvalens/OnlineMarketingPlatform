@@ -14,6 +14,7 @@ import ClientInvoicesPage from './pages/dashboard/ClientInvoicesPage';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
 import AdminPortfolioPage from './pages/dashboard/AdminPortfolioPage';
 import AdminUsersPage from './pages/dashboard/AdminUsersPage';
+import ProfilePage from './pages/dashboard/ProfilePage';
 import ServicesPage from './pages/public/ServicesPage';
 import PortfolioPage from './pages/public/PortfolioPage';
 import BlogPage from './pages/public/BlogPage';
@@ -70,7 +71,12 @@ export default function App() {
             <ProtectedRoute roles={['client']}><ClientInvoicesPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/client/profile" element={
-            <ProtectedRoute roles={['client']}><Soon title="Profile" /></ProtectedRoute>
+            <ProtectedRoute roles={['client']}><ProfilePage /></ProtectedRoute>
+          } />
+
+          {/* Shared profile for all roles */}
+          <Route path="/profile" element={
+            <ProtectedRoute roles={['client','staff','editor','finance','admin']}><ProfilePage /></ProtectedRoute>
           } />
 
           {/* Admin / Staff dashboard */}
