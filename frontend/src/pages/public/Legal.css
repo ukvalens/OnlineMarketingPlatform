@@ -1,0 +1,6 @@
+.legal__body { max-width: 760px; margin: 0 auto; }
+.legal__body h2 { font-size: 20px; font-weight: 700; margin: 32px 0 12px; color: var(--text); }
+.legal__body h2:first-child { margin-top: 0; }
+.legal__body p { font-size: 15px; color: var(--text-muted); line-height: 1.8; margin-bottom: 8px; }
+.legal__body a { color: var(--primary); font-weight: 500; }
+.legal__body a:hover { text-decoration: underline; }

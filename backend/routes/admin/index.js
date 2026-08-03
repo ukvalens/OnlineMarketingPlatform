@@ -11,12 +11,54 @@ router.use(authenticate, authorize('admin'));
 router.get('/users', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, name, email, phone, role, company_name, is_active, created_at FROM users ORDER BY created_at DESC'
+      `SELECT u.id, u.name, u.email, u.phone, u.role, u.company_name, u.industry,
+        u.is_active, u.created_at,
+        COUNT(DISTINCT o.id) AS order_count,
+        COALESCE(SUM(i.amount) FILTER (WHERE i.status='paid'), 0) AS total_paid
+       FROM users u
+       LEFT JOIN orders o ON o.client_id = u.id
+       LEFT JOIN invoices i ON i.order_id = o.id
+       GROUP BY u.id
+       ORDER BY u.created_at DESC`
     );
     res.json(rows);
   } catch (err) {
     next(err);
   }
+});
+
+// POST /api/admin/users — create user
+router.post('/users', async (req, res, next) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const { name, email, password, phone, role, company_name } = req.body;
+    if (!name || !email || !password) return res.status(400).json({ message: 'name, email and password are required' });
+    const exists = await pool.query('SELECT id FROM users WHERE email=$1', [email]);
+    if (exists.rows.length) return res.status(409).json({ message: 'Email already registered' });
+    const password_hash = await bcrypt.hash(password, 12);
+    const { rows } = await pool.query(
+      `INSERT INTO users (name, email, phone, password_hash, role, company_name)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, name, email, phone, role, company_name, is_active, created_at`,
+      [name, email, phone || null, password_hash, role || 'client', company_name || null]
+    );
+    await pool.query(
+      'INSERT INTO audit_logs (user_id, action, entity, entity_id, meta) VALUES ($1,$2,$3,$4,$5)',
+      [req.user.id, 'CREATE_USER', 'users', rows[0].id, JSON.stringify({ role: rows[0].role })]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) { next(err); }
+});
+
+// GET /api/admin/users/:id/audit
+router.get('/users/:id/audit', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT a.*, u.name AS actor FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id
+       WHERE a.entity_id=$1 ORDER BY a.created_at DESC LIMIT 50`,
+      [req.params.id]
+    );
+    res.json(rows);
+  } catch (err) { next(err); }
 });
 
 // PATCH /api/admin/users/:id — update role or active status

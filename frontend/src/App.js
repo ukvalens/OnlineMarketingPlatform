@@ -13,6 +13,7 @@ import ClientOrdersPage from './pages/dashboard/ClientOrdersPage';
 import ClientInvoicesPage from './pages/dashboard/ClientInvoicesPage';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
 import AdminPortfolioPage from './pages/dashboard/AdminPortfolioPage';
+import AdminOrdersPage from './pages/dashboard/AdminOrdersPage';
 import AdminUsersPage from './pages/dashboard/AdminUsersPage';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import ServicesPage from './pages/public/ServicesPage';
@@ -86,7 +87,7 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/dashboard/admin/orders" element={
-            <ProtectedRoute roles={STAFF_ROLES}><Soon title="Orders Management" /></ProtectedRoute>
+            <ProtectedRoute roles={STAFF_ROLES}><AdminOrdersPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/clients" element={
             <ProtectedRoute roles={['admin', 'staff']}><Soon title="Clients" /></ProtectedRoute>

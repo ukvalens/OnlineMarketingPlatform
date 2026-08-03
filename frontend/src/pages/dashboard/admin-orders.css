@@ -1,0 +1,65 @@
+/* Wide drawer */
+.drawer--wide {
+  max-width: 580px;
+}
+
+/* Admin action rows */
+.admin-action-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.admin-action-row .form-group {
+  margin: 0;
+}
+
+.admin-action-row .form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.admin-action-row input,
+.admin-action-row select {
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--light);
+  width: 100%;
+  transition: border-color var(--transition);
+}
+
+.admin-action-row input:focus,
+.admin-action-row select:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+}
+
+/* Deliverable badges */
+.deliv-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+.deliv-badge--ok  { background: #f0fdf4; color: #15803d; }
+.deliv-badge--rev { background: #fff7ed; color: #c2410c; }
+
+/* Clickable section toggle */
+.detail-section__toggle.clickable { cursor: pointer; }
+
+@media (max-width: 600px) {
+  .drawer--wide { max-width: 100%; }
+  .admin-action-row { flex-direction: column; }
+}

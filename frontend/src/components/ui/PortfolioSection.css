@@ -1,0 +1,106 @@
+.portfolio-section { background: var(--light); }
+
+.portfolio-section__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 48px;
+  gap: 24px;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto auto;
+  gap: 24px;
+}
+
+.portfolio-item {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: white;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.portfolio-item:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+
+.portfolio-item--featured {
+  grid-column: span 2;
+}
+
+.portfolio-item__img {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portfolio-item--featured .portfolio-item__img { height: 280px; }
+
+.portfolio-item__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.portfolio-item__emoji { font-size: 56px; }
+
+.portfolio-item__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.portfolio-item:hover .portfolio-item__overlay { opacity: 1; }
+
+.portfolio-item__btn {
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 18px;
+  transition: transform var(--transition);
+}
+
+.portfolio-item__btn:hover { transform: scale(1.1); }
+
+.portfolio-item__info {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.portfolio-item__info h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.portfolio-item__info p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .portfolio-item--featured { grid-column: span 1; }
+  .portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .portfolio-grid { grid-template-columns: 1fr; }
+  .portfolio-section__header { flex-direction: column; align-items: flex-start; }
+}

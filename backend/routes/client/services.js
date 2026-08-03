@@ -7,8 +7,10 @@ const optionalAuth = require('../../middleware/optionalAuth');
 const validate = require('../../middleware/validate');
 
 // GET /api/services — visitor + all authenticated roles
+// admins/editors see all (including inactive); others see active only
 router.get('/', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
   try {
+    const isAdmin = req.user && ['admin', 'editor'].includes(req.user.role);
     const { rows } = await pool.query(`
       SELECT s.*, json_agg(
         json_build_object('id', sp.id, 'tier', sp.tier, 'price', sp.price, 'features', sp.features, 'delivery_days', sp.delivery_days)
@@ -16,7 +18,7 @@ router.get('/', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 
       ) AS packages
       FROM services s
       LEFT JOIN service_packages sp ON sp.service_id = s.id
-      WHERE s.is_active = TRUE
+      ${isAdmin ? '' : 'WHERE s.is_active = TRUE'}
       GROUP BY s.id
       ORDER BY s.name
     `);

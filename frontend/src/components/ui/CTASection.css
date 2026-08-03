@@ -1,0 +1,111 @@
+.cta-section {
+  background: linear-gradient(135deg, #003d8a 0%, #0057B8 60%, #0070e0 100%);
+  padding: 80px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  top: -200px;
+  right: -100px;
+}
+
+.cta-section__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.cta-section__contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cta-section__contacts a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255,255,255,0.85);
+  font-size: 15px;
+  transition: color var(--transition);
+}
+
+.cta-section__contacts a:hover { color: #4ade80; }
+
+/* Form card */
+.cta-section__form {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 36px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+}
+
+.cta-section__form h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.cta-section__form input,
+.cta-section__form textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--light);
+  transition: border-color var(--transition);
+  margin-bottom: 14px;
+  display: block;
+}
+
+.cta-section__form input:focus,
+.cta-section__form textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-row input { margin-bottom: 0; }
+
+.form-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.cta-success {
+  text-align: center;
+  padding: 32px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.cta-success span { font-size: 48px; }
+.cta-success p { font-size: 15px; color: var(--text-muted); }
+
+@media (max-width: 900px) {
+  .cta-section__grid { grid-template-columns: 1fr; gap: 40px; }
+  .form-row { grid-template-columns: 1fr; }
+}

@@ -167,6 +167,7 @@ CREATE TABLE contact_submissions (
   email VARCHAR(255) NOT NULL,
   phone VARCHAR(20),
   subject VARCHAR(255),
+  service VARCHAR(150),
   message TEXT NOT NULL,
   is_read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()

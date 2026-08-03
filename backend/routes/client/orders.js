@@ -136,11 +136,12 @@ router.patch(
   validate,
   async (req, res, next) => {
     try {
-      const { status, progress_percent } = req.body;
+      const { status, progress_percent, assigned_staff_id } = req.body;
       const { rows } = await pool.query(
-        `UPDATE orders SET status=$1, progress_percent=COALESCE($2, progress_percent), updated_at=NOW()
-         WHERE id=$3 RETURNING *`,
-        [status, progress_percent, req.params.id]
+        `UPDATE orders SET status=$1, progress_percent=COALESCE($2, progress_percent),
+          assigned_staff_id=COALESCE($3, assigned_staff_id), updated_at=NOW()
+         WHERE id=$4 RETURNING *`,
+        [status, progress_percent, assigned_staff_id || null, req.params.id]
       );
       if (!rows.length) return res.status(404).json({ message: 'Order not found' });
       await notifyOrderUpdate(rows[0].id, `Order ${rows[0].reference} Updated`, `Your order status is now: ${status}.`);
@@ -150,6 +151,19 @@ router.patch(
     }
   }
 );
+
+// PATCH /api/orders/:id/assign — staff/admin assigns staff member
+router.patch('/:id/assign', authenticate, authorize('staff', 'admin'), async (req, res, next) => {
+  try {
+    const { assigned_staff_id } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE orders SET assigned_staff_id=$1, updated_at=NOW() WHERE id=$2 RETURNING *`,
+      [assigned_staff_id || null, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Order not found' });
+    res.json(rows[0]);
+  } catch (err) { next(err); }
+});
 
 // PATCH /api/orders/:id/cancel — client or admin cancels
 router.patch('/:id/cancel', authenticate, async (req, res, next) => {

@@ -20,10 +20,10 @@ router.post(
   validate,
   async (req, res, next) => {
     try {
-      const { name, email, phone, subject, message } = req.body;
+      const { name, email, phone, subject, message, service } = req.body;
       await pool.query(
-        'INSERT INTO contact_submissions (name, email, phone, subject, message) VALUES ($1,$2,$3,$4,$5)',
-        [name, email, phone, subject, message]
+        'INSERT INTO contact_submissions (name, email, phone, subject, message, service) VALUES ($1,$2,$3,$4,$5,$6)',
+        [name, email, phone, subject, message, service || null]
       );
       // Notify admin
       await sendEmail({
