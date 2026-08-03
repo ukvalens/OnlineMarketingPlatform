@@ -9,7 +9,11 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ClientDashboard from './pages/dashboard/ClientDashboard';
+import ClientOrdersPage from './pages/dashboard/ClientOrdersPage';
+import ClientInvoicesPage from './pages/dashboard/ClientInvoicesPage';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
+import AdminPortfolioPage from './pages/dashboard/AdminPortfolioPage';
+import AdminUsersPage from './pages/dashboard/AdminUsersPage';
 import ServicesPage from './pages/public/ServicesPage';
 import PortfolioPage from './pages/public/PortfolioPage';
 import BlogPage from './pages/public/BlogPage';
@@ -57,13 +61,13 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/dashboard/client/orders" element={
-            <ProtectedRoute roles={['client']}><Soon title="My Orders" /></ProtectedRoute>
+            <ProtectedRoute roles={['client']}><ClientOrdersPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/client/messages" element={
             <ProtectedRoute roles={['client']}><Soon title="Messages" /></ProtectedRoute>
           } />
           <Route path="/dashboard/client/invoices" element={
-            <ProtectedRoute roles={['client']}><Soon title="Invoices" /></ProtectedRoute>
+            <ProtectedRoute roles={['client']}><ClientInvoicesPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/client/profile" element={
             <ProtectedRoute roles={['client']}><Soon title="Profile" /></ProtectedRoute>
@@ -94,13 +98,13 @@ export default function App() {
             <ProtectedRoute roles={['admin', 'editor']}><Soon title="Blog Management" /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/portfolio" element={
-            <ProtectedRoute roles={['admin', 'editor']}><Soon title="Portfolio Management" /></ProtectedRoute>
+            <ProtectedRoute roles={['admin', 'editor']}><AdminPortfolioPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/analytics" element={
             <ProtectedRoute roles={['admin']}><Soon title="Analytics" /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/users" element={
-            <ProtectedRoute roles={['admin']}><Soon title="User Management" /></ProtectedRoute>
+            <ProtectedRoute roles={['admin']}><AdminUsersPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/settings" element={
             <ProtectedRoute roles={['admin']}><Soon title="Settings" /></ProtectedRoute>
