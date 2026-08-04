@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 const STAFF_ROLES = ['admin', 'staff', 'editor', 'finance'];
 
 export const getDashboardPath = (role) =>
-  STAFF_ROLES.includes(role) ? '/dashboard/admin' : '/dashboard/client';
+  STAFF_ROLES.includes(role) ? '/dashboard/admin' :
+  role === 'client' ? '/dashboard/client' : '/login';
 
 // Blocks unauthenticated users
 export function ProtectedRoute({ children, roles }) {
@@ -24,5 +25,6 @@ export function GuestRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="page-loader"><span className="spinner" /></div>;
   if (user) return <Navigate to={getDashboardPath(user.role)} replace />;
+
   return children;
 }

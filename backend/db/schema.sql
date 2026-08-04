@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ENUM types
-CREATE TYPE user_role AS ENUM ('visitor', 'client', 'staff', 'editor', 'finance', 'admin');
+CREATE TYPE user_role AS ENUM ('client', 'staff', 'editor', 'finance', 'admin');
 CREATE TYPE order_status AS ENUM ('requested', 'quoted', 'confirmed', 'in_progress', 'in_review', 'completed', 'cancelled');
 CREATE TYPE payment_status AS ENUM ('pending', 'partial', 'paid', 'failed');
 CREATE TYPE payment_method AS ENUM ('mtn_momo', 'airtel_money', 'card');

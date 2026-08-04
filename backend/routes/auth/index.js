@@ -57,6 +57,7 @@ router.post(
       );
       const user = rows[0];
       if (!user || !user.is_active) return res.status(401).json({ message: 'Invalid credentials' });
+      if (user.role === 'visitor') return res.status(403).json({ message: 'Visitors cannot log in. Please register for an account.' });
 
       const valid = await bcrypt.compare(password, user.password_hash);
       if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
