@@ -15,6 +15,8 @@ import AdminDashboard from './pages/dashboard/AdminDashboard';
 import AdminPortfolioPage from './pages/dashboard/AdminPortfolioPage';
 import AdminOrdersPage from './pages/dashboard/AdminOrdersPage';
 import AdminUsersPage from './pages/dashboard/AdminUsersPage';
+import AdminInvoicesPage from './pages/dashboard/AdminInvoicesPage';
+import AdminPaymentsPage from './pages/dashboard/AdminPaymentsPage';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import ServicesPage from './pages/public/ServicesPage';
 import PortfolioPage from './pages/public/PortfolioPage';
@@ -96,10 +98,10 @@ export default function App() {
             <ProtectedRoute roles={STAFF_ROLES}><Soon title="Messages" /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/invoices" element={
-            <ProtectedRoute roles={['admin', 'finance']}><Soon title="Invoices" /></ProtectedRoute>
+            <ProtectedRoute roles={['admin', 'finance']}><AdminInvoicesPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/payments" element={
-            <ProtectedRoute roles={['admin', 'finance']}><Soon title="Payments" /></ProtectedRoute>
+            <ProtectedRoute roles={['admin', 'finance']}><AdminPaymentsPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/blog" element={
             <ProtectedRoute roles={['admin', 'editor']}><Soon title="Blog Management" /></ProtectedRoute>

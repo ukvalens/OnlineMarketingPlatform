@@ -19,6 +19,33 @@ router.get('/', authenticate, async (req, res, next) => {
   }
 });
 
+// POST /api/invoices — finance/admin create invoice
+router.post('/', authenticate, authorize('admin', 'finance'), async (req, res, next) => {
+  try {
+    const { order_id, amount, due_date } = req.body;
+    if (!order_id || !amount) return res.status(400).json({ message: 'order_id and amount are required' });
+    const { rows } = await pool.query(
+      `INSERT INTO invoices (order_id, amount, due_date) VALUES ($1,$2,$3)
+       RETURNING *`,
+      [order_id, amount, due_date || null]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) { next(err); }
+});
+
+// PATCH /api/invoices/:id/status — finance/admin update status
+router.patch('/:id/status', authenticate, authorize('admin', 'finance'), async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE invoices SET status=$1 WHERE id=$2 RETURNING *`,
+      [status, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Invoice not found' });
+    res.json(rows[0]);
+  } catch (err) { next(err); }
+});
+
 // GET /api/invoices/:id
 router.get('/:id', authenticate, async (req, res, next) => {
   try {
