@@ -7,11 +7,10 @@ const authorize = require('../../middleware/authorize');
 const optionalAuth = require('../../middleware/optionalAuth');
 const validate = require('../../middleware/validate');
 
-// POST /api/contact — visitor + all roles
+// POST /api/contact — public
 router.post(
   '/',
   optionalAuth,
-  authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'),
   [
     body('name').trim().notEmpty(),
     body('email').isEmail().normalizeEmail(),
@@ -48,18 +47,22 @@ router.get('/', authenticate, authorize('admin', 'staff'), async (req, res, next
   }
 });
 
-// GET /api/contact/testimonials — visitor + all roles
-router.get('/testimonials', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
+// GET /api/contact/testimonials — public; admin/editor sees all
+router.get('/testimonials', optionalAuth, async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM testimonials WHERE is_published=TRUE ORDER BY created_at DESC');
+    const role = req.user?.role;
+    const isEditor = role === 'editor' || role === 'admin';
+    const { rows } = await pool.query(
+      isEditor
+        ? 'SELECT * FROM testimonials ORDER BY created_at DESC'
+        : 'SELECT * FROM testimonials WHERE is_published=TRUE ORDER BY created_at DESC'
+    );
     res.json(rows);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
 
-// POST /api/testimonials — admin
-router.post('/testimonials', authenticate, authorize('admin'), async (req, res, next) => {
+// POST /api/testimonials — admin/editor
+router.post('/testimonials', authenticate, authorize('admin', 'editor'), async (req, res, next) => {
   try {
     const { client_name, company, content, rating, is_published } = req.body;
     const { rows } = await pool.query(
@@ -72,8 +75,8 @@ router.post('/testimonials', authenticate, authorize('admin'), async (req, res, 
   }
 });
 
-// PUT /api/testimonials/:id — admin
-router.put('/testimonials/:id', authenticate, authorize('admin'), async (req, res, next) => {
+// PUT /api/testimonials/:id — admin/editor
+router.put('/testimonials/:id', authenticate, authorize('admin', 'editor'), async (req, res, next) => {
   try {
     const { client_name, company, content, rating, is_published } = req.body;
     const { rows } = await pool.query(
@@ -88,8 +91,8 @@ router.put('/testimonials/:id', authenticate, authorize('admin'), async (req, re
   }
 });
 
-// DELETE /api/testimonials/:id — admin
-router.delete('/testimonials/:id', authenticate, authorize('admin'), async (req, res, next) => {
+// DELETE /api/testimonials/:id — admin/editor
+router.delete('/testimonials/:id', authenticate, authorize('admin', 'editor'), async (req, res, next) => {
   try {
     await pool.query('DELETE FROM testimonials WHERE id=$1', [req.params.id]);
     res.json({ message: 'Deleted' });

@@ -6,9 +6,8 @@ const authorize = require('../../middleware/authorize');
 const optionalAuth = require('../../middleware/optionalAuth');
 const validate = require('../../middleware/validate');
 
-// GET /api/services — visitor + all authenticated roles
-// admins/editors see all (including inactive); others see active only
-router.get('/', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
+// GET /api/services — public; admins/editors see all (including inactive)
+router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const isAdmin = req.user && ['admin', 'editor'].includes(req.user.role);
     const { rows } = await pool.query(`
@@ -28,8 +27,8 @@ router.get('/', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 
   }
 });
 
-// GET /api/services/:id — visitor + all authenticated roles
-router.get('/:id', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
+// GET /api/services/:id — public
+router.get('/:id', optionalAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT s.*, json_agg(

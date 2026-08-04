@@ -7,14 +7,11 @@ const jwt = require('jsonwebtoken');
  */
 const optionalAuth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    req.user = { role: 'visitor' };
-    return next();
-  }
+  if (!token) return next();
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
   } catch {
-    req.user = { role: 'visitor' };
+    // invalid token — treat as unauthenticated
   }
   next();
 };
