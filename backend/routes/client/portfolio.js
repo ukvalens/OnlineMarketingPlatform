@@ -5,22 +5,31 @@ const authorize = require('../../middleware/authorize');
 const optionalAuth = require('../../middleware/optionalAuth');
 const upload = require('../../config/multer');
 
-// GET /api/portfolio — visitor + all authenticated roles
-router.get('/', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
+// GET /api/portfolio — public (no auth needed); admin/editor sees all including unpublished
+router.get('/', optionalAuth, async (req, res, next) => {
   try {
+    const role = req.user?.role;
+    const isEditor = role === 'editor' || role === 'admin';
     const { category } = req.query;
-    const query = category
-      ? 'SELECT * FROM portfolio_items WHERE is_published=TRUE AND category=$1 ORDER BY published_at DESC'
-      : 'SELECT * FROM portfolio_items WHERE is_published=TRUE ORDER BY published_at DESC';
-    const { rows } = await pool.query(query, category ? [category] : []);
+    let query, params;
+    if (isEditor) {
+      query = category
+        ? 'SELECT * FROM portfolio_items WHERE category=$1 ORDER BY created_at DESC'
+        : 'SELECT * FROM portfolio_items ORDER BY created_at DESC';
+      params = category ? [category] : [];
+    } else {
+      query = category
+        ? 'SELECT * FROM portfolio_items WHERE is_published=TRUE AND category=$1 ORDER BY published_at DESC'
+        : 'SELECT * FROM portfolio_items WHERE is_published=TRUE ORDER BY published_at DESC';
+      params = category ? [category] : [];
+    }
+    const { rows } = await pool.query(query, params);
     res.json(rows);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
 
-// GET /api/portfolio/:id — visitor + all authenticated roles
-router.get('/:id', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
+// GET /api/portfolio/:id — public
+router.get('/:id', optionalAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM portfolio_items WHERE id=$1 AND is_published=TRUE', [req.params.id]);
     if (!rows.length) return res.status(404).json({ message: 'Not found' });
@@ -67,8 +76,8 @@ router.put('/:id', authenticate, authorize('editor', 'admin'), upload.single('im
   }
 });
 
-// DELETE /api/portfolio/:id — admin only
-router.delete('/:id', authenticate, authorize('admin'), async (req, res, next) => {
+// DELETE /api/portfolio/:id — editor/admin
+router.delete('/:id', authenticate, authorize('editor', 'admin'), async (req, res, next) => {
   try {
     await pool.query('DELETE FROM portfolio_items WHERE id=$1', [req.params.id]);
     res.json({ message: 'Deleted' });

@@ -10,8 +10,8 @@ const upload = require('../../config/multer');
 const slugify = (text) =>
   text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-// GET /api/blog — visitor + all authenticated roles
-router.get('/', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
+// GET /api/blog — public (no auth needed)
+router.get('/', async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
@@ -27,8 +27,20 @@ router.get('/', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 
   }
 });
 
-// GET /api/blog/:slug — visitor + all authenticated roles
-router.get('/:slug', optionalAuth, authorize('visitor', 'client', 'staff', 'editor', 'finance', 'admin'), async (req, res, next) => {
+// GET /api/blog/admin/all — editor/admin sees all posts including drafts
+router.get('/admin/all', authenticate, authorize('editor', 'admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT b.id, b.title, b.slug, b.excerpt, b.cover_image, b.status, b.published_at, b.created_at, b.updated_at, u.name AS author
+       FROM blog_posts b JOIN users u ON u.id=b.author_id
+       ORDER BY b.created_at DESC`
+    );
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+// GET /api/blog/:slug — public
+router.get('/:slug', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT b.*, u.name AS author FROM blog_posts b JOIN users u ON u.id=b.author_id
@@ -88,8 +100,8 @@ router.put('/:id', authenticate, authorize('editor', 'admin'), upload.single('co
   }
 });
 
-// DELETE /api/blog/:id — admin only
-router.delete('/:id', authenticate, authorize('admin'), async (req, res, next) => {
+// DELETE /api/blog/:id — editor/admin
+router.delete('/:id', authenticate, authorize('editor', 'admin'), async (req, res, next) => {
   try {
     await pool.query('DELETE FROM blog_posts WHERE id=$1', [req.params.id]);
     res.json({ message: 'Deleted' });
