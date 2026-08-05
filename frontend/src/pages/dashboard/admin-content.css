@@ -303,6 +303,45 @@
   .admin-tabs { overflow-x: auto; }
 }
 
+@media (max-width: 360px) {
+  .content-toolbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .admin-tab { padding: 8px 14px; font-size: 13px; }
+}
+
+/* ── Toast ── */
+.toast-stack {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  pointer-events: auto;
+  animation: toast-in .2s ease;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.toast--success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.toast--error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.toast--info    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
 /* ── User avatar ── */
 .user-avatar {
   width: 34px; height: 34px;

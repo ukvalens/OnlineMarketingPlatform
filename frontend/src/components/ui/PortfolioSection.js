@@ -2,17 +2,18 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
-import api from '../../api';
+import api, { getImageUrl } from '../../api';
+import useBreakpoint from '../../hooks/useBreakpoint';
 import './PortfolioSection.css';
 
 export default function PortfolioSection() {
   const [items, setItems] = useState([]);
+  const { isDesktop } = useBreakpoint();
 
   useEffect(() => {
     api.get('/portfolio').then(({ data }) => setItems(data.slice(0, 6))).catch(() => {});
   }, []);
 
-  // Fallback placeholder items when API has no data yet
   const display = items.length > 0 ? items : PLACEHOLDERS;
 
   return (
@@ -31,10 +32,13 @@ export default function PortfolioSection() {
 
         <div className="portfolio-grid">
           {display.map((item, i) => (
-            <div key={item.id || i} className={`portfolio-item${i === 0 ? ' portfolio-item--featured' : ''}`}>
+            <div
+              key={item.id || i}
+              className={`portfolio-item${i === 0 && isDesktop ? ' portfolio-item--featured' : ''}`}
+            >
               <div className="portfolio-item__img" style={{ background: GRADIENTS[i % GRADIENTS.length] }}>
                 {item.image_url
-                  ? <img src={`http://localhost:5000${item.image_url}`} alt={item.title} />
+                  ? <img src={getImageUrl(item.image_url)} alt={item.title} />
                   : <span className="portfolio-item__emoji">{EMOJIS[i % EMOJIS.length]}</span>
                 }
                 <div className="portfolio-item__overlay">

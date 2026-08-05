@@ -4,7 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faBook, faImage, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from './DashboardLayout';
-import api from '../../api';
+import ResponsiveTable from '../../components/ui/ResponsiveTable';
+import api, { exportCsv } from '../../api';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -101,26 +102,28 @@ export default function AdminDashboard() {
             ) : posts.length === 0 ? (
               <div className="dash-empty" style={{ padding: 24 }}><p>No posts yet.</p></div>
             ) : (
-              <table className="dash-table">
-                <thead><tr><th>Title</th><th>Status</th><th>Date</th></tr></thead>
-                <tbody>
-                  {posts.slice(0, 5).map(p => (
-                    <tr key={p.id}>
-                      <td style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <strong>{p.title}</strong>
-                      </td>
-                      <td>
-                        <span className={`portfolio-card__badge ${p.status === 'published' ? 'published' : 'draft'}`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                        {new Date(p.created_at).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ResponsiveTable>
+                <table className="dash-table">
+                  <thead><tr><th>Title</th><th>Status</th><th>Date</th></tr></thead>
+                  <tbody>
+                    {posts.slice(0, 5).map(p => (
+                      <tr key={p.id}>
+                        <td style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <strong>{p.title}</strong>
+                        </td>
+                        <td>
+                          <span className={`portfolio-card__badge ${p.status === 'published' ? 'published' : 'draft'}`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                          {new Date(p.created_at).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ResponsiveTable>
             )}
           </div>
 
@@ -136,22 +139,24 @@ export default function AdminDashboard() {
             ) : portfolio.length === 0 ? (
               <div className="dash-empty" style={{ padding: 24 }}><p>No portfolio items yet.</p></div>
             ) : (
-              <table className="dash-table">
-                <thead><tr><th>Title</th><th>Category</th><th>Status</th></tr></thead>
-                <tbody>
-                  {portfolio.slice(0, 5).map(p => (
-                    <tr key={p.id}>
-                      <td><strong>{p.title}</strong></td>
-                      <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>{p.category || '—'}</td>
-                      <td>
-                        <span className={`portfolio-card__badge ${p.is_published ? 'published' : 'draft'}`}>
-                          {p.is_published ? 'Published' : 'Draft'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ResponsiveTable>
+                <table className="dash-table">
+                  <thead><tr><th>Title</th><th>Category</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {portfolio.slice(0, 5).map(p => (
+                      <tr key={p.id}>
+                        <td><strong>{p.title}</strong></td>
+                        <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>{p.category || '—'}</td>
+                        <td>
+                          <span className={`portfolio-card__badge ${p.is_published ? 'published' : 'draft'}`}>
+                            {p.is_published ? 'Published' : 'Draft'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ResponsiveTable>
             )}
           </div>
         </div>
@@ -164,42 +169,44 @@ export default function AdminDashboard() {
             <h3>Recent Orders</h3>
             <div style={{ display: 'flex', gap: 8 }}>
               {user?.role === 'admin' && (
-                <a href="http://localhost:5000/api/admin/export/orders" className="btn btn-outline btn-sm" target="_blank" rel="noreferrer">
+                <button className="btn btn-outline btn-sm" onClick={() => exportCsv('orders', 'orders.csv')}>
                   <FontAwesomeIcon icon={faDownload} /> Export CSV
-                </a>
+                </button>
               )}
               <Link to="/dashboard/admin/orders" className="btn btn-primary btn-sm">View All</Link>
             </div>
           </div>
-          <table className="dash-table">
-            <thead>
-              <tr>
-                <th>Reference</th>
-                <th>Client</th>
-                <th>Service</th>
-                <th>Status</th>
-                <th>Amount (RWF)</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>Loading...</td></tr>
-              ) : orders.slice(0, 8).map(order => (
-                <tr key={order.id}>
-                  <td><strong>{order.reference}</strong></td>
-                  <td>{order.client_name}</td>
-                  <td>{order.service_name}</td>
-                  <td><span className={`status-badge status-badge--${order.status}`}>{order.status.replace('_', ' ')}</span></td>
-                  <td>{order.quote_amount ? Number(order.quote_amount).toLocaleString() : '—'}</td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{new Date(order.created_at).toLocaleDateString()}</td>
+          <ResponsiveTable minWidth={600}>
+            <table className="dash-table">
+              <thead>
+                <tr>
+                  <th>Reference</th>
+                  <th>Client</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Amount (RWF)</th>
+                  <th>Date</th>
                 </tr>
-              ))}
-              {!loading && orders.length === 0 && (
-                <tr><td colSpan={6} className="dash-empty">No orders yet.</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>Loading...</td></tr>
+                ) : orders.slice(0, 8).map(order => (
+                  <tr key={order.id}>
+                    <td><strong>{order.reference}</strong></td>
+                    <td>{order.client_name}</td>
+                    <td>{order.service_name}</td>
+                    <td><span className={`status-badge status-badge--${order.status}`}>{order.status.replace('_', ' ')}</span></td>
+                    <td>{order.quote_amount ? Number(order.quote_amount).toLocaleString() : '—'}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{new Date(order.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+                {!loading && orders.length === 0 && (
+                  <tr><td colSpan={6} className="dash-empty">No orders yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </ResponsiveTable>
         </div>
       )}
 
@@ -227,13 +234,13 @@ export default function AdminDashboard() {
             </div>
             <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { label: 'Export Clients CSV', path: 'clients' },
-                { label: 'Export Orders CSV', path: 'orders' },
-                { label: 'Export Payments CSV', path: 'payments' },
-              ].map(({ label, path }) => (
-                <a key={path} href={`http://localhost:5000/api/admin/export/${path}`} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
+                { label: 'Export Clients CSV',  path: 'clients',  file: 'clients.csv'  },
+                { label: 'Export Orders CSV',   path: 'orders',   file: 'orders.csv'   },
+                { label: 'Export Payments CSV', path: 'payments', file: 'payments.csv' },
+              ].map(({ label, path, file }) => (
+                <button key={path} className="btn btn-outline btn-sm" onClick={() => exportCsv(path, file)}>
                   <FontAwesomeIcon icon={faDownload} /> {label}
-                </a>
+                </button>
               ))}
             </div>
           </div>

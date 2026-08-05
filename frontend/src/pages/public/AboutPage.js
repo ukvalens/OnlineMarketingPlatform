@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBullseye, faEye, faHeart, faTrophy, faUsers, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../components/layout/Layout';
+import usePageView from '../../hooks/usePageView';
 import './About.css';
 
 const TEAM = [
@@ -19,6 +20,7 @@ const VALUES = [
 ];
 
 export default function AboutPage() {
+  usePageView();
   return (
     <Layout>
       {/* Hero */}

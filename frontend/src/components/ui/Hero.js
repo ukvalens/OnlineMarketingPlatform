@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faPlay } from '@fortawesome/free-solid-svg-icons';
+import useBreakpoint from '../../hooks/useBreakpoint';
 import './Hero.css';
 
 const STATS = [
@@ -11,6 +12,7 @@ const STATS = [
 ];
 
 export default function Hero() {
+  const { isDesktop } = useBreakpoint();
   return (
     <section className="hero">
       <div className="hero__bg-shapes">
@@ -56,34 +58,38 @@ export default function Hero() {
         </div>
 
         <div className="hero__visual">
-          <div className="hero__card hero__card--main">
-            <div className="hcard__header">
-              <div className="hcard__dot green" />
-              <span>Campaign Performance</span>
-            </div>
-            <div className="hcard__chart">
-              {[40, 65, 50, 80, 60, 90, 75].map((h, i) => (
-                <div key={i} className="hcard__bar" style={{ height: `${h}%`, animationDelay: `${i * 0.1}s` }} />
-              ))}
-            </div>
-            <p className="hcard__label">↑ 42% reach increase this month</p>
-          </div>
+          {isDesktop && (
+            <>
+              <div className="hero__card hero__card--main">
+                <div className="hcard__header">
+                  <div className="hcard__dot green" />
+                  <span>Campaign Performance</span>
+                </div>
+                <div className="hcard__chart">
+                  {[40, 65, 50, 80, 60, 90, 75].map((h, i) => (
+                    <div key={i} className="hcard__bar" style={{ height: `${h}%`, animationDelay: `${i * 0.1}s` }} />
+                  ))}
+                </div>
+                <p className="hcard__label">↑ 42% reach increase this month</p>
+              </div>
 
-          <div className="hero__card hero__card--sm hero__card--top">
-            <div className="hcard__icon">📱</div>
-            <div>
-              <strong>Social Media</strong>
-              <p>+1.2K followers</p>
-            </div>
-          </div>
+              <div className="hero__card hero__card--sm hero__card--top">
+                <div className="hcard__icon">📱</div>
+                <div>
+                  <strong>Social Media</strong>
+                  <p>+1.2K followers</p>
+                </div>
+              </div>
 
-          <div className="hero__card hero__card--sm hero__card--bottom">
-            <div className="hcard__icon">🎯</div>
-            <div>
-              <strong>Ad Campaigns</strong>
-              <p>3.8x ROI average</p>
-            </div>
-          </div>
+              <div className="hero__card hero__card--sm hero__card--bottom">
+                <div className="hcard__icon">🎯</div>
+                <div>
+                  <strong>Ad Campaigns</strong>
+                  <p>3.8x ROI average</p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

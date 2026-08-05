@@ -199,6 +199,27 @@
   margin-top: 3px;
 }
 
+/* Client info list in drawer */
+.client-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.client-info-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.client-info-item svg {
+  color: var(--text-muted);
+  width: 14px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 1100px) {
   .role-summary-row { grid-template-columns: repeat(3, 1fr); }
 }
@@ -210,4 +231,9 @@
 
 @media (max-width: 480px) {
   .role-summary-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 360px) {
+  .role-summary-card { padding: 10px 12px; }
+  .role-summary-card__count { font-size: 16px; }
 }

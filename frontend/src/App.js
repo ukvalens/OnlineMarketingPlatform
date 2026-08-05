@@ -15,8 +15,10 @@ import AdminDashboard from './pages/dashboard/AdminDashboard';
 import AdminPortfolioPage from './pages/dashboard/AdminPortfolioPage';
 import AdminOrdersPage from './pages/dashboard/AdminOrdersPage';
 import AdminUsersPage from './pages/dashboard/AdminUsersPage';
+import AdminClientsPage from './pages/dashboard/AdminClientsPage';
 import AdminInvoicesPage from './pages/dashboard/AdminInvoicesPage';
 import AdminPaymentsPage from './pages/dashboard/AdminPaymentsPage';
+import AdminAnalyticsPage from './pages/dashboard/AdminAnalyticsPage';
 import EditorBlogPage from './pages/dashboard/EditorBlogPage';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import ServicesPage from './pages/public/ServicesPage';
@@ -93,7 +95,7 @@ export default function App() {
             <ProtectedRoute roles={STAFF_ROLES}><AdminOrdersPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/clients" element={
-            <ProtectedRoute roles={['admin', 'staff']}><Soon title="Clients" /></ProtectedRoute>
+            <ProtectedRoute roles={['admin', 'staff']}><AdminClientsPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/messages" element={
             <ProtectedRoute roles={STAFF_ROLES}><Soon title="Messages" /></ProtectedRoute>
@@ -111,7 +113,7 @@ export default function App() {
             <ProtectedRoute roles={['admin', 'editor']}><AdminPortfolioPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/analytics" element={
-            <ProtectedRoute roles={['admin']}><Soon title="Analytics" /></ProtectedRoute>
+            <ProtectedRoute roles={['admin']}><AdminAnalyticsPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/users" element={
             <ProtectedRoute roles={['admin']}><AdminUsersPage /></ProtectedRoute>

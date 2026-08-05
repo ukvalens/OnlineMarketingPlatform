@@ -5,7 +5,7 @@ import {
   faCheck, faEye, faMobileAlt, faMoneyBill
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
-import api from '../../api';
+import api, { exportCsv } from '../../api';
 import './orders.css';
 import './invoices.css';
 import './admin-orders.css';
@@ -142,9 +142,9 @@ export default function AdminPaymentsPage() {
               placeholder="Search ref, order, client…"
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <a href="http://localhost:5000/api/admin/export/payments" target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
+          <button className="btn btn-outline btn-sm" onClick={() => exportCsv('payments', 'payments.csv')}>
             <FontAwesomeIcon icon={faDownload} /> Export CSV
-          </a>
+          </button>
           <button className="btn btn-primary btn-sm" onClick={openRecord}>
             <FontAwesomeIcon icon={faMoneyBill} /> Record Payment
           </button>

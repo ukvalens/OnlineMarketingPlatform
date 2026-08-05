@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faXmark, faChevronDown, faUser, faRightFromBracket, faTableCells } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
+import useBreakpoint from '../../hooks/useBreakpoint';
 import './Navbar.css';
 
 const NAV_LINKS = [
@@ -20,12 +21,16 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { isDesktop } = useBreakpoint();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Auto-close mobile menu when resizing to desktop
+  useEffect(() => { if (isDesktop) { setOpen(false); setDropdownOpen(false); } }, [isDesktop]);
 
   const handleLogout = () => {
     logout();
@@ -56,6 +61,13 @@ export default function Navbar() {
               </NavLink>
             </li>
           ))}
+          {/* Auth links inside mobile menu */}
+          {!isDesktop && !user && (
+            <li className="navbar__links-auth">
+              <Link to="/login" className="btn btn-outline btn-sm" onClick={() => setOpen(false)}>Login</Link>
+              <Link to="/register" className="btn btn-primary btn-sm" onClick={() => setOpen(false)}>Get Started</Link>
+            </li>
+          )}
         </ul>
 
         <div className="navbar__actions">

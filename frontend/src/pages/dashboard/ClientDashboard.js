@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBagShopping, faFileLines, faMessage, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from './DashboardLayout';
+import ResponsiveTable from '../../components/ui/ResponsiveTable';
 import api from '../../api';
 
 export default function ClientDashboard() {
@@ -62,28 +63,30 @@ export default function ClientDashboard() {
               No orders yet. <Link to="/services" style={{ color: 'var(--primary)' }}>Browse services</Link>
             </div>
           ) : (
-            <table className="dash-table">
-              <thead>
-                <tr>
-                  <th>Reference</th>
-                  <th>Service</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.slice(0, 5).map(order => (
-                  <tr key={order.id}>
-                    <td><strong>{order.reference}</strong></td>
-                    <td>{order.service_name}</td>
-                    <td><span className={`status-badge status-badge--${order.status}`}>{order.status.replace('_', ' ')}</span></td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                      {new Date(order.created_at).toLocaleDateString()}
-                    </td>
+            <ResponsiveTable>
+              <table className="dash-table">
+                <thead>
+                  <tr>
+                    <th>Reference</th>
+                    <th>Service</th>
+                    <th>Status</th>
+                    <th>Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {orders.slice(0, 5).map(order => (
+                    <tr key={order.id}>
+                      <td><strong>{order.reference}</strong></td>
+                      <td>{order.service_name}</td>
+                      <td><span className={`status-badge status-badge--${order.status}`}>{order.status.replace('_', ' ')}</span></td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ResponsiveTable>
           )}
         </div>
 
@@ -101,28 +104,30 @@ export default function ClientDashboard() {
               No invoices yet.
             </div>
           ) : (
-            <table className="dash-table">
-              <thead>
-                <tr>
-                  <th>Order</th>
-                  <th>Amount (RWF)</th>
-                  <th>Status</th>
-                  <th>Due</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.slice(0, 5).map(inv => (
-                  <tr key={inv.id}>
-                    <td><strong>{inv.reference}</strong></td>
-                    <td>{Number(inv.amount).toLocaleString()}</td>
-                    <td><span className={`status-badge status-badge--${inv.status}`}>{inv.status}</span></td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                      {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}
-                    </td>
+            <ResponsiveTable>
+              <table className="dash-table">
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Amount (RWF)</th>
+                    <th>Status</th>
+                    <th>Due</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {invoices.slice(0, 5).map(inv => (
+                    <tr key={inv.id}>
+                      <td><strong>{inv.reference}</strong></td>
+                      <td>{Number(inv.amount).toLocaleString()}</td>
+                      <td><span className={`status-badge status-badge--${inv.status}`}>{inv.status}</span></td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                        {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ResponsiveTable>
           )}
         </div>
       </div>

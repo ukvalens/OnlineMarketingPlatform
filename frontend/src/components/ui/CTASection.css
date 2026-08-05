@@ -109,3 +109,12 @@
   .cta-section__grid { grid-template-columns: 1fr; gap: 40px; }
   .form-row { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 480px) {
+  .cta-section { padding: 56px 0; }
+  .cta-section__form { padding: 24px 20px; }
+}
+
+@media (max-width: 360px) {
+  .cta-section__form { padding: 20px 14px; }
+}

@@ -26,3 +26,8 @@
 .contact__social a:hover { background: var(--primary); color: white; }
 
 @media (max-width: 900px) { .contact__grid { grid-template-columns: 1fr; } }
+
+@media (max-width: 360px) {
+  .contact__info-card { padding: 24px 16px; }
+  .contact__success { padding: 32px 16px; }
+}

@@ -1,5 +1,7 @@
+/* Changes made: defined global theme variables, spacing tokens, and design system foundations. */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+/* Change made: root custom properties for colors, shadows, borders, and transitions. */
 :root {
   --primary: #0057B8;
   --primary-dark: #004494;
@@ -21,10 +23,12 @@
   --transition: 0.22s ease;
 }
 
+/* Change made: global reset for consistent box-sizing and spacing. */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
 
+/* Change made: base typography and page background styling. */
 body {
   font-family: 'Inter', sans-serif;
   color: var(--text);
@@ -38,16 +42,27 @@ img { max-width: 100%; display: block; }
 ul { list-style: none; }
 button { cursor: pointer; font-family: inherit; }
 
+/* Change made: responsive content container widths and padding. */
 .container {
   width: 100%;
-  max-width: 1200px;
+  max-width: min(1200px, 100%);
   margin: 0 auto;
   padding: 0 24px;
 }
 
+@media (min-width: 1440px) {
+  .container { max-width: 1320px; }
+}
+
+@media (min-width: 1920px) {
+  .container { max-width: 1600px; }
+}
+
+/* Change made: standard section spacing utilities for consistent page structure. */
 .section { padding: 80px 0; }
 .section-sm { padding: 48px 0; }
 
+/* Change made: section label styling for small accent text and spacing. */
 .section-label {
   display: inline-block;
   font-size: 13px;
@@ -58,6 +73,7 @@ button { cursor: pointer; font-family: inherit; }
   margin-bottom: 12px;
 }
 
+/* Change made: section title styling for responsive heading scale and bold emphasis. */
 .section-title {
   font-size: clamp(28px, 4vw, 42px);
   font-weight: 800;
@@ -66,6 +82,7 @@ button { cursor: pointer; font-family: inherit; }
   margin-bottom: 16px;
 }
 
+/* Change made: subtitle styling for supporting descriptive text. */
 .section-subtitle {
   font-size: 17px;
   color: var(--text-muted);
@@ -76,6 +93,7 @@ button { cursor: pointer; font-family: inherit; }
 .text-center { text-align: center; }
 .text-center .section-subtitle { margin: 0 auto; }
 
+/* Change made: base button reset and spacing for consistent button appearance. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -120,6 +138,7 @@ button { cursor: pointer; font-family: inherit; }
 .btn-lg { padding: 16px 36px; font-size: 16px; }
 .btn-sm { padding: 9px 20px; font-size: 14px; }
 
+/* Change made: card component styling with hover lift and subtle border. */
 .card {
   background: var(--white);
   border-radius: var(--radius-lg);
@@ -129,6 +148,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .card:hover { box-shadow: var(--shadow); transform: translateY(-3px); }
 
+/* Change made: badge styling for inline labels and status chips. */
 .badge {
   display: inline-block;
   padding: 4px 12px;
@@ -139,7 +159,18 @@ button { cursor: pointer; font-family: inherit; }
 .badge-primary { background: var(--primary-light); color: var(--primary); }
 .badge-accent { background: #e6f7f1; color: var(--accent); }
 
-/* Grid helpers */
+/* Change made: page hero section styling with bold gradient background and contrast text. */
+.page-hero {
+  background: linear-gradient(135deg, #003d8a 0%, #0057B8 100%);
+  color: white;
+  padding: 100px 0 60px;
+}
+
+.page-hero .section-label { color: #4ade80; }
+.page-hero .section-title { color: white; margin-bottom: 12px; }
+.page-hero .section-subtitle { color: rgba(255,255,255,0.8); }
+
+/* Change made: grid helper utilities for 2-, 3-, and 4-column layouts. */
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
@@ -149,7 +180,23 @@ button { cursor: pointer; font-family: inherit; }
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
+  /* Change made: stack grid layouts and adjust spacing for tablet devices. */
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .section { padding: 56px 0; }
   .container { padding: 0 16px; }
+}
+
+@media (max-width: 480px) {
+  /* Change made: mobile spacing and button sizing for small screens. */
+  .section { padding: 40px 0; }
+  .section-sm { padding: 32px 0; }
+  .container { padding: 0 12px; }
+  .btn { padding: 11px 20px; font-size: 14px; }
+  .btn-lg { padding: 13px 24px; font-size: 15px; }
+  .section-subtitle { font-size: 15px; }
+}
+
+@media (max-width: 360px) {
+  .container { padding: 0 10px; }
+  .btn { padding: 10px 16px; font-size: 13px; }
 }

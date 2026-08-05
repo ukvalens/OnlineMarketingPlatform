@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar, faUser, faMagnifyingGlass, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../components/layout/Layout';
-import api from '../../api';
+import usePageView from '../../hooks/usePageView';
+import api, { getImageUrl } from '../../api';
 import './Blog.css';
 
 const GRADIENTS = ['linear-gradient(135deg,#0057B8,#60a5fa)','linear-gradient(135deg,#00A86B,#4ade80)','linear-gradient(135deg,#7c3aed,#a78bfa)','linear-gradient(135deg,#f59e0b,#fcd34d)','linear-gradient(135deg,#ef4444,#f87171)','linear-gradient(135deg,#0891b2,#67e8f9)'];
@@ -19,6 +20,7 @@ const PLACEHOLDERS = [
 ];
 
 export default function BlogPage() {
+  usePageView();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -29,7 +31,8 @@ export default function BlogPage() {
     api.get('/blog?limit=50').then(({ data }) => setPosts(data)).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const display = posts.length > 0 ? posts : PLACEHOLDERS;
+  const isPlaceholder = posts.length === 0;
+  const display = isPlaceholder ? PLACEHOLDERS : posts;
   const filtered = display.filter(p => p.title.toLowerCase().includes(search.toLowerCase()));
   const paginated = filtered.slice(0, page * PER_PAGE);
   const hasMore = paginated.length < filtered.length;
@@ -61,25 +64,31 @@ export default function BlogPage() {
           ) : (
             <>
               <div className="blog-page__grid">
-                {paginated.map((post, i) => (
-                  <Link to={`/blog/${post.slug}`} key={post.slug + i} className="blog-page__card card">
-                    <div className="blog-page__card-img" style={{ background: GRADIENTS[i % GRADIENTS.length] }}>
-                      {post.cover_image
-                        ? <img src={`http://localhost:5000${post.cover_image}`} alt={post.title} />
-                        : <span>{EMOJIS[i % EMOJIS.length]}</span>
-                      }
-                    </div>
-                    <div className="blog-page__card-body">
-                      <div className="blog-page__meta">
-                        <span><FontAwesomeIcon icon={faCalendar} />{new Date(post.published_at).toLocaleDateString('en-RW',{month:'short',day:'numeric',year:'numeric'})}</span>
-                        <span><FontAwesomeIcon icon={faUser} />{post.author}</span>
+                {paginated.map((post, i) => {
+                  const CardEl = isPlaceholder ? 'div' : Link;
+                  const cardProps = isPlaceholder
+                    ? { key: post.slug + i, className: 'blog-page__card card', style: { cursor: 'default' } }
+                    : { to: `/blog/${post.slug}`, key: post.slug + i, className: 'blog-page__card card' };
+                  return (
+                    <CardEl {...cardProps}>
+                      <div className="blog-page__card-img" style={{ background: GRADIENTS[i % GRADIENTS.length] }}>
+                        {post.cover_image
+                          ? <img src={getImageUrl(post.cover_image)} alt={post.title} />
+                          : <span>{EMOJIS[i % EMOJIS.length]}</span>
+                        }
                       </div>
-                      <h3>{post.title}</h3>
-                      <p>{post.excerpt}</p>
-                      <span className="blog-page__read">Read article <FontAwesomeIcon icon={faArrowRight} /></span>
-                    </div>
-                  </Link>
-                ))}
+                      <div className="blog-page__card-body">
+                        <div className="blog-page__meta">
+                          <span><FontAwesomeIcon icon={faCalendar} />{new Date(post.published_at).toLocaleDateString('en-RW',{month:'short',day:'numeric',year:'numeric'})}</span>
+                          <span><FontAwesomeIcon icon={faUser} />{post.author}</span>
+                        </div>
+                        <h3>{post.title}</h3>
+                        <p>{post.excerpt}</p>
+                        {!isPlaceholder && <span className="blog-page__read">Read article <FontAwesomeIcon icon={faArrowRight} /></span>}
+                      </div>
+                    </CardEl>
+                  );
+                })}
               </div>
               {hasMore && (
                 <div style={{ textAlign:'center', marginTop:40 }}>

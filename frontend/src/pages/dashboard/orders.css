@@ -331,3 +331,9 @@
   .detail-grid { grid-template-columns: 1fr; }
   .drawer { max-width: 100%; }
 }
+
+@media (max-width: 360px) {
+  .modal { margin: 0 8px; }
+  .modal__body { padding: 16px; }
+  .drawer__body { padding: 16px; }
+}

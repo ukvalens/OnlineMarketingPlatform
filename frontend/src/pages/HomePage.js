@@ -1,5 +1,6 @@
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import Layout from '../components/layout/Layout';
+import usePageView from '../hooks/usePageView';
 import Hero from '../components/ui/Hero';
 import ServicesSection from '../components/ui/ServicesSection';
 import WhyUs from '../components/ui/WhyUs';
@@ -9,6 +10,7 @@ import BlogSection from '../components/ui/BlogSection';
 import CTASection from '../components/ui/CTASection';
 
 export default function HomePage() {
+  usePageView();
   return (
     <HelmetProvider>
       <Helmet>

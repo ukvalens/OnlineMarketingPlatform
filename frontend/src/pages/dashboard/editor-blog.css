@@ -186,3 +186,9 @@
   .blog-row__actions { flex-direction: row; flex-wrap: wrap; }
   .blog-drawer { max-width: 100%; }
 }
+
+@media (max-width: 360px) {
+  .blog-body-editor { min-height: 240px; }
+  .blog-status-toggle { flex-direction: column; }
+  .blog-status-btn { justify-content: center; }
+}

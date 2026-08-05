@@ -168,3 +168,8 @@
 @media (max-width: 1024px) { .svc-packages { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 700px)  { .svc-packages { grid-template-columns: 1fr; } .svc-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 480px)  { .svc-grid { grid-template-columns: 1fr; } .svc-hero__stats { gap: 24px; } }
+@media (max-width: 360px)  {
+  .svc-hero { padding: 56px 0 40px; }
+  .svc-panel { padding: 20px 14px; }
+  .svc-cta__inner { flex-direction: column; align-items: flex-start; }
+}

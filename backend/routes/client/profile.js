@@ -4,12 +4,13 @@ const { body } = require('express-validator');
 const pool = require('../../config/db');
 const authenticate = require('../../middleware/authenticate');
 const validate = require('../../middleware/validate');
+const upload = require('../../config/multer');
 
 // GET /api/profile
 router.get('/', authenticate, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, name, email, phone, role, company_name, industry, created_at FROM users WHERE id=$1',
+      'SELECT id, name, email, phone, role, company_name, industry, avatar_url, created_at FROM users WHERE id=$1',
       [req.user.id]
     );
     res.json(rows[0]);
@@ -18,22 +19,37 @@ router.get('/', authenticate, async (req, res, next) => {
   }
 });
 
+// PUT /api/profile/avatar — upload only
+router.put('/avatar', authenticate, upload.single('avatar'), async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No image file provided.' });
+    const avatar_url = `/uploads/${req.file.filename}`;
+    const { rows } = await pool.query(
+      'UPDATE users SET avatar_url=$1, updated_at=NOW() WHERE id=$2 RETURNING id, name, email, phone, company_name, industry, avatar_url',
+      [avatar_url, req.user.id]
+    );
+    res.json(rows[0]);
+  } catch (err) { next(err); }
+});
+
 // PUT /api/profile
 router.put(
   '/',
   authenticate,
-  [body('email').optional().isEmail().normalizeEmail()],
+  upload.single('avatar'),
+  [body('email').optional({ values: 'falsy' }).isEmail().normalizeEmail()],
   validate,
   async (req, res, next) => {
     try {
       const { name, phone, company_name, industry, email } = req.body;
+      const avatar_url = req.file ? `/uploads/${req.file.filename}` : undefined;
       const { rows } = await pool.query(
         `UPDATE users SET
           name=COALESCE($1,name), phone=COALESCE($2,phone),
           company_name=COALESCE($3,company_name), industry=COALESCE($4,industry),
-          email=COALESCE($5,email), updated_at=NOW()
-         WHERE id=$6 RETURNING id, name, email, phone, company_name, industry`,
-        [name, phone, company_name, industry, email, req.user.id]
+          email=COALESCE($5,email), avatar_url=COALESCE($6,avatar_url), updated_at=NOW()
+         WHERE id=$7 RETURNING id, name, email, phone, company_name, industry, avatar_url`,
+        [name, phone, company_name, industry, email, avatar_url, req.user.id]
       );
       res.json(rows[0]);
     } catch (err) {

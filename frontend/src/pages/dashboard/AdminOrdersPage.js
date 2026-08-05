@@ -7,7 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../api';
+import api, { exportCsv, getImageUrl } from '../../api';
 import './orders.css';
 import './admin-content.css';
 import './admin-orders.css';
@@ -235,9 +235,9 @@ export default function AdminOrdersPage() {
               placeholder="Search ref, client, service…"
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <a href="http://localhost:5000/api/admin/export/orders" target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
+          <button className="btn btn-outline btn-sm" onClick={() => exportCsv('orders', 'orders.csv')}>
             <FontAwesomeIcon icon={faDownload} /> Export CSV
-          </a>
+          </button>
         </div>
       </div>
 
@@ -455,7 +455,7 @@ export default function AdminOrdersPage() {
                             {d.is_approved === false && <span className="deliv-badge deliv-badge--rev">Revision requested</span>}
                             {d.revision_note && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Note: {d.revision_note}</div>}
                           </div>
-                          <a href={`http://localhost:5000${d.file_url}`} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
+                          <a href={getImageUrl(d.file_url)} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
                             <FontAwesomeIcon icon={faDownload} />
                           </a>
                         </li>

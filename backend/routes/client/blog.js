@@ -84,15 +84,17 @@ router.post(
 router.put('/:id', authenticate, authorize('editor', 'admin'), upload.single('cover_image'), async (req, res, next) => {
   try {
     const { title, body: postBody, excerpt, status } = req.body;
-    const cover_image = req.file ? `/uploads/${req.file.filename}` : undefined;
     const { rows } = await pool.query(
       `UPDATE blog_posts SET
         title=COALESCE($1,title), body=COALESCE($2,body), excerpt=COALESCE($3,excerpt),
-        cover_image=COALESCE($4,cover_image), status=COALESCE($5,status),
-        published_at=CASE WHEN $5='published' AND status='draft' THEN NOW() ELSE published_at END,
+        ${req.file ? 'cover_image=$4,' : ''}
+        status=COALESCE($${req.file ? 5 : 4},status),
+        published_at=CASE WHEN $${req.file ? 5 : 4}='published' AND status='draft' THEN NOW() ELSE published_at END,
         updated_at=NOW()
-       WHERE id=$6 RETURNING *`,
-      [title, postBody, excerpt, cover_image, status, req.params.id]
+       WHERE id=$${req.file ? 6 : 5} RETURNING *`,
+      req.file
+        ? [title, postBody, excerpt, `/uploads/${req.file.filename}`, status, req.params.id]
+        : [title, postBody, excerpt, status, req.params.id]
     );
     res.json(rows[0]);
   } catch (err) {

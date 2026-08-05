@@ -19,6 +19,7 @@ CREATE TABLE users (
   role user_role NOT NULL DEFAULT 'client',
   company_name VARCHAR(200),
   industry VARCHAR(100),
+  avatar_url VARCHAR(500),
   reset_token VARCHAR(255),
   reset_token_expires TIMESTAMPTZ,
   is_active BOOLEAN DEFAULT TRUE,
@@ -32,6 +33,7 @@ CREATE TABLE services (
   name VARCHAR(200) UNIQUE NOT NULL,
   description TEXT,
   category VARCHAR(100),
+  image_url VARCHAR(500),
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -191,3 +193,16 @@ CREATE INDEX idx_messages_order ON messages(order_id);
 CREATE INDEX idx_payments_invoice ON payments(invoice_id);
 CREATE INDEX idx_blog_slug ON blog_posts(slug);
 CREATE INDEX idx_audit_user ON audit_logs(user_id);
+
+-- Team members
+CREATE TABLE team_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(150) NOT NULL,
+  role VARCHAR(100) NOT NULL,
+  bio TEXT,
+  avatar_url VARCHAR(500),
+  linkedin_url VARCHAR(500),
+  display_order INTEGER DEFAULT 0,
+  is_published BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);

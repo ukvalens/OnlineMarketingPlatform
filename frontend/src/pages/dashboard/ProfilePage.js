@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUser, faLock, faShield, faTriangleExclamation,
@@ -6,7 +6,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../api';
+import api, { getImageUrl } from '../../api';
 import './orders.css';
 import './admin-content.css';
 import './profile.css';
@@ -31,6 +31,22 @@ const fmtDate  = (d) => new Date(d).toLocaleDateString('en-RW', { day: '2-digit'
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const [tab, setTab] = useState('info');
+  const avatarInputRef = useRef();
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const { data } = await api.put('/profile/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      updateUser(data);
+    } catch { /* ignore */ }
+    setAvatarUploading(false);
+    e.target.value = '';
+  };
 
   return (
     <DashboardLayout pageTitle="My Profile" pageSubtitle="Manage your account information and security">
@@ -38,12 +54,18 @@ export default function ProfilePage() {
 
         {/* Left — identity card */}
         <aside className="profile-card">
-          <div className="profile-card__avatar" style={{ background: ROLE_META[user?.role]?.color }}>
-            {initials(user?.name)}
+          <div className="profile-card__avatar"
+            style={{ background: user?.avatar_url ? 'transparent' : ROLE_META[user?.role]?.color }}
+            onClick={() => avatarInputRef.current.click()}>
+            {user?.avatar_url
+              ? <img src={getImageUrl(user.avatar_url)} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 20 }} />
+              : initials(user?.name)
+            }
             <div className="profile-card__avatar-overlay">
-              <FontAwesomeIcon icon={faCamera} />
+              {avatarUploading ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} /> : <FontAwesomeIcon icon={faCamera} />}
             </div>
           </div>
+          <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
           <h2 className="profile-card__name">{user?.name}</h2>
           <span className="role-badge profile-card__role"
             style={{ background: ROLE_META[user?.role]?.bg, color: ROLE_META[user?.role]?.color }}>
@@ -131,7 +153,9 @@ function InfoTab({ user, updateUser }) {
     e.preventDefault();
     setSaving(true); setError(''); setSuccess(false);
     try {
-      const { data } = await api.put('/profile', form);
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => v && fd.append(k, v));
+      const { data } = await api.put('/profile', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       updateUser(data);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);

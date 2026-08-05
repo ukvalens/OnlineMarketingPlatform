@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar, faUser, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../components/layout/Layout';
-import api from '../../api';
+import api, { getImageUrl } from '../../api';
 import './Blog.css';
 
 export default function BlogPostPage() {
@@ -40,7 +40,7 @@ export default function BlogPostPage() {
     <Layout>
       <div className="blog-post">
         <div className="blog-post__hero" style={{ background:'linear-gradient(135deg,#003d8a,#0057B8)' }}>
-          {post.cover_image && <img src={`http://localhost:5000${post.cover_image}`} alt={post.title} className="blog-post__hero-img" />}
+          {post.cover_image && <img src={getImageUrl(post.cover_image)} alt={post.title} className="blog-post__hero-img" />}
           <div className="container blog-post__hero-content">
             <Link to="/blog" className="blog-post__back"><FontAwesomeIcon icon={faArrowLeft} /> Back to Blog</Link>
             <h1>{post.title}</h1>

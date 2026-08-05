@@ -4,12 +4,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faPhone, faEnvelope, faMapPin, faClock } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook, faTwitter, faInstagram, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 import Layout from '../../components/layout/Layout';
+import usePageView from '../../hooks/usePageView';
 import api from '../../api';
 import './Contact.css';
 
 const SERVICES = ['Social Media Marketing','Digital Advertising','Website Promotion','Graphic Design','Branding Services','Business Consulting','Online Product Marketing','Other'];
 
 export default function ContactPage() {
+  usePageView();
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     name: '', email: '', phone: '',

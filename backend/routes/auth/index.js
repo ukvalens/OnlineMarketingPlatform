@@ -123,7 +123,7 @@ router.post(
 router.get('/me', authenticate, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, name, email, phone, role, company_name, industry, created_at FROM users WHERE id=$1',
+      'SELECT id, name, email, phone, role, company_name, industry, avatar_url, created_at FROM users WHERE id=$1',
       [req.user.id]
     );
     res.json(rows[0]);

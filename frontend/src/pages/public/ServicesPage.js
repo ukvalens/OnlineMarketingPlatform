@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faArrowRight, faBolt } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../components/layout/Layout';
-import api from '../../api';
+import usePageView from '../../hooks/usePageView';
+import api, { getImageUrl } from '../../api';
 import './Services.css';
 
 const ICONS = {
@@ -21,6 +22,7 @@ const STATS = [
 ];
 
 export default function ServicesPage() {
+  usePageView();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(null);
@@ -88,7 +90,12 @@ export default function ServicesPage() {
                     className={`svc-card${active === s.id ? ' svc-card--active' : ''}`}
                     onClick={() => handleSelect(s.id)}
                   >
-                    <div className="svc-card__icon">{ICONS[s.category] || '🚀'}</div>
+                    <div className="svc-card__icon">
+                      {s.image_url
+                        ? <img src={getImageUrl(s.image_url)} alt={s.name} style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover' }} />
+                        : ICONS[s.category] || '🚀'
+                      }
+                    </div>
                     <h3>{s.name}</h3>
                     <p>{s.description}</p>
                     <span className="svc-card__cta">
@@ -102,7 +109,12 @@ export default function ServicesPage() {
               {selected && (
                 <div className="svc-panel">
                   <div className="svc-panel__header">
-                    <div className="svc-panel__icon">{ICONS[selected.category] || '🚀'}</div>
+                    <div className="svc-panel__icon">
+                    {selected.image_url
+                      ? <img src={getImageUrl(selected.image_url)} alt={selected.name} style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover' }} />
+                      : ICONS[selected.category] || '🚀'
+                    }
+                  </div>
                     <div>
                       <h2>{selected.name}</h2>
                       <p>{selected.description}</p>

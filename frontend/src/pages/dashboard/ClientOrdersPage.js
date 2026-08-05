@@ -6,13 +6,14 @@ import {
   faDownload, faChevronDown, faChevronUp
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
-import api from '../../api';
+import api, { getImageUrl } from '../../api';
 import './orders.css';
 
 const STATUSES = ['all', 'requested', 'quoted', 'confirmed', 'in_progress', 'in_review', 'completed', 'cancelled'];
 
 const fmt = (n) => Number(n).toLocaleString();
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-RW', { day: '2-digit', month: 'short', year: 'numeric' });
+const fmtStatus = (status) => typeof status === 'string' ? status.replace('_', ' ') : 'Unknown';
 
 export default function ClientOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -143,7 +144,7 @@ export default function ClientOrdersPage() {
               className={`orders-filter-btn${filter === s ? ' active' : ''}`}
               onClick={() => setFilter(s)}
             >
-              {s === 'all' ? 'All' : s.replace('_', ' ')}
+              {s === 'all' ? 'All' : fmtStatus(s)}
             </button>
           ))}
         </div>
@@ -191,7 +192,7 @@ export default function ClientOrdersPage() {
                   <td>{order.service_name}</td>
                   <td style={{ textTransform: 'capitalize' }}>{order.tier || '—'}</td>
                   <td>{order.quote_amount ? fmt(order.quote_amount) : '—'}</td>
-                  <td><span className={`status-badge status-badge--${order.status}`}>{order.status.replace('_', ' ')}</span></td>
+                  <td><span className={`status-badge status-badge--${order.status || 'unknown'}`}>{fmtStatus(order.status)}</span></td>
                   <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{fmtDate(order.created_at)}</td>
                   <td>
                     <button className="btn btn-outline btn-sm" onClick={() => openDetail(order)}>
@@ -278,7 +279,7 @@ export default function ClientOrdersPage() {
             <div className="drawer__header">
               <div>
                 <h3>{selected.reference}</h3>
-                <span className={`status-badge status-badge--${selected.status}`}>{selected.status.replace('_', ' ')}</span>
+                <span className={`status-badge status-badge--${selected.status || 'unknown'}`}>{fmtStatus(selected.status)}</span>
               </div>
               <button className="modal__close" onClick={closeDetail}><FontAwesomeIcon icon={faXmark} /></button>
             </div>
@@ -356,7 +357,7 @@ export default function ClientOrdersPage() {
                       {deliverables.map(d => (
                         <li key={d.id} className="deliverable-item">
                           <span>📎 {d.file_name}</span>
-                          <a href={`http://localhost:5000${d.file_url}`} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
+                          <a href={getImageUrl(d.file_url)} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
                             <FontAwesomeIcon icon={faDownload} /> Download
                           </a>
                         </li>

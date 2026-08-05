@@ -18,7 +18,9 @@ const profileRoutes = require('./routes/client/profile');
 const portfolioRoutes = require('./routes/client/portfolio');
 const blogRoutes = require('./routes/client/blog');
 const contactRoutes = require('./routes/client/contact');
+const teamRoutes = require('./routes/client/team');
 const adminRoutes = require('./routes/admin');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 
@@ -36,8 +38,11 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many requests' }));
 app.use('/api', rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 
-// Static uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Static uploads — cross-origin allowed so the React frontend (port 3000) can load images
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -50,7 +55,9 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/team', teamRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));

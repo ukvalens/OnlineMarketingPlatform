@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faCalendar, faUser } from '@fortawesome/free-solid-svg-icons';
-import api from '../../api';
+import api, { getImageUrl } from '../../api';
 import './BlogSection.css';
 
 const FALLBACK = [
@@ -37,7 +37,7 @@ export default function BlogSection() {
             <Link to={`/blog/${post.slug}`} key={post.slug + i} className="blog-card card">
               <div className="blog-card__img" style={{ background: GRADIENTS[i % GRADIENTS.length] }}>
                 {post.cover_image
-                  ? <img src={`http://localhost:5000${post.cover_image}`} alt={post.title} />
+                  ? <img src={getImageUrl(post.cover_image)} alt={post.title} />
                   : <span className="blog-card__emoji">{EMOJIS[i % EMOJIS.length]}</span>
                 }
               </div>

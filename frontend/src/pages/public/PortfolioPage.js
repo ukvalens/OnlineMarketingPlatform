@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../components/layout/Layout';
-import api from '../../api';
+import usePageView from '../../hooks/usePageView';
+import api, { getImageUrl } from '../../api';
 import './Portfolio.css';
 
 const GRADIENTS = [
@@ -27,9 +28,11 @@ const PLACEHOLDERS = [
 ];
 
 export default function PortfolioPage() {
+  usePageView();
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(3);
 
   useEffect(() => {
     api.get('/portfolio').then(({ data }) => setItems(data)).catch(() => {}).finally(() => setLoading(false));
@@ -38,6 +41,7 @@ export default function PortfolioPage() {
   const display = items.length > 0 ? items : PLACEHOLDERS;
   const categories = ['All', ...new Set(display.map(i => i.category).filter(Boolean))];
   const filtered = filter === 'All' ? display : display.filter(i => i.category === filter);
+  const visible = filtered.slice(0, visibleCount);
 
   return (
     <Layout>
@@ -54,7 +58,7 @@ export default function PortfolioPage() {
           {/* Category filter */}
           <div className="portfolio-filters">
             {categories.map(cat => (
-              <button key={cat} className={`filter-btn${filter === cat ? ' filter-btn--active' : ''}`} onClick={() => setFilter(cat)}>
+              <button key={cat} className={`filter-btn${filter === cat ? ' filter-btn--active' : ''}`} onClick={() => { setFilter(cat); setVisibleCount(3); }}>
                 {cat}
               </button>
             ))}
@@ -66,11 +70,11 @@ export default function PortfolioPage() {
             </div>
           ) : (
             <div className="portfolio-page__grid">
-              {filtered.map((item, i) => (
+              {visible.map((item, i) => (
                 <div key={item.id} className="portfolio-card">
                   <div className="portfolio-card__img" style={{ background: GRADIENTS[i % GRADIENTS.length] }}>
                     {item.image_url
-                      ? <img src={`http://localhost:5000${item.image_url}`} alt={item.title} />
+                      ? <img src={getImageUrl(item.image_url)} alt={item.title} />
                       : <span>{EMOJIS[i % EMOJIS.length]}</span>
                     }
                     <div className="portfolio-card__overlay">
@@ -85,6 +89,13 @@ export default function PortfolioPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          {!loading && visibleCount < filtered.length && (
+            <div style={{ textAlign: 'center', marginTop: 40 }}>
+              <button className="btn btn-outline" onClick={() => setVisibleCount(v => v + 3)}>
+                View More
+              </button>
             </div>
           )}
         </div>

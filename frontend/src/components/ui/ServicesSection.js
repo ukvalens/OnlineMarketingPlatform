@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faCheck } from '@fortawesome/free-solid-svg-icons';
-import api from '../../api';
+import api, { getImageUrl } from '../../api';
 import './ServicesSection.css';
 
 const ICONS = {
@@ -46,7 +46,10 @@ export default function ServicesSection() {
             {services.map((service) => (
               <div key={service.id} className="service-card card">
                 <div className="service-card__icon">
-                  {ICONS[service.category] || '🚀'}
+                  {service.image_url
+                    ? <img src={getImageUrl(service.image_url)} alt={service.name} style={{ width: 52, height: 52, borderRadius: 12, objectFit: 'cover' }} />
+                    : ICONS[service.category] || '🚀'
+                  }
                 </div>
                 <h3>{service.name}</h3>
                 <p>{service.description}</p>

@@ -121,3 +121,8 @@
   .footer__grid { grid-template-columns: 1fr; gap: 32px; }
   .footer__bottom { flex-direction: column; gap: 6px; text-align: center; }
 }
+
+@media (max-width: 360px) {
+  .footer { padding: 48px 0 0; }
+  .footer__grid { gap: 24px; }
+}

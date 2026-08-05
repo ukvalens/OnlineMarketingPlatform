@@ -4,8 +4,8 @@ const authenticate = require('../../middleware/authenticate');
 const authorize = require('../../middleware/authorize');
 const { Parser } = require('json2csv');
 
-// All admin routes require authentication + admin role
-router.use(authenticate, authorize('admin'));
+// All admin routes require authentication + at least staff role
+router.use(authenticate, authorize('admin', 'finance', 'staff'));
 
 // GET /api/admin/users
 router.get('/users', async (req, res, next) => {
@@ -118,6 +118,46 @@ router.get('/analytics', async (req, res, next) => {
   }
 });
 
+// GET /api/admin/clients — clients with order + payment summary
+router.get('/clients', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT
+         u.id, u.name, u.email, u.phone, u.company_name, u.industry,
+         u.is_active, u.created_at,
+         COUNT(DISTINCT o.id)                                          AS order_count,
+         COUNT(DISTINCT o.id) FILTER (WHERE o.status = 'completed')   AS completed_orders,
+         COUNT(DISTINCT o.id) FILTER (WHERE o.status IN ('confirmed','in_progress','in_review')) AS active_orders,
+         COALESCE(SUM(i.amount) FILTER (WHERE i.status = 'paid'), 0)  AS total_paid,
+         MAX(o.created_at)                                             AS last_order_at
+       FROM users u
+       LEFT JOIN orders  o ON o.client_id = u.id
+       LEFT JOIN invoices i ON i.order_id  = o.id
+       WHERE u.role = 'client'
+       GROUP BY u.id
+       ORDER BY u.created_at DESC`
+    );
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+// GET /api/admin/clients/:id/orders
+router.get('/clients/:id/orders', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT o.*, s.name AS service_name,
+         COALESCE(i.amount, 0) AS invoice_amount, i.status AS invoice_status
+       FROM orders o
+       JOIN services s ON s.id = o.service_id
+       LEFT JOIN invoices i ON i.order_id = o.id
+       WHERE o.client_id = $1
+       ORDER BY o.created_at DESC`,
+      [req.params.id]
+    );
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
 // GET /api/admin/audit-logs
 router.get('/audit-logs', async (req, res, next) => {
   try {
@@ -130,19 +170,23 @@ router.get('/audit-logs', async (req, res, next) => {
   }
 });
 
+const EXPORT_FIELDS = {
+  clients:  ['id','name','email','phone','company_name','industry','created_at'],
+  orders:   ['reference','client','service','status','quote_amount','created_at'],
+  payments: ['transaction_ref','method','amount','status','paid_at','invoice_id','reference'],
+};
+
 // GET /api/admin/export/clients
 router.get('/export/clients', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       'SELECT id, name, email, phone, company_name, industry, created_at FROM users WHERE role=\'client\''
     );
-    const csv = new Parser().parse(rows);
+    const csv = new Parser({ fields: EXPORT_FIELDS.clients }).parse(rows);
     res.header('Content-Type', 'text/csv');
     res.attachment('clients.csv');
     res.send(csv);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
 
 // GET /api/admin/export/orders
@@ -152,13 +196,11 @@ router.get('/export/orders', async (req, res, next) => {
       `SELECT o.reference, u.name AS client, s.name AS service, o.status, o.quote_amount, o.created_at
        FROM orders o JOIN users u ON u.id=o.client_id JOIN services s ON s.id=o.service_id`
     );
-    const csv = new Parser().parse(rows);
+    const csv = new Parser({ fields: EXPORT_FIELDS.orders }).parse(rows);
     res.header('Content-Type', 'text/csv');
     res.attachment('orders.csv');
     res.send(csv);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
 
 // GET /api/admin/export/payments
@@ -168,13 +210,11 @@ router.get('/export/payments', async (req, res, next) => {
       `SELECT p.transaction_ref, p.method, p.amount, p.status, p.paid_at, i.id AS invoice_id, o.reference
        FROM payments p JOIN invoices i ON i.id=p.invoice_id JOIN orders o ON o.id=i.order_id`
     );
-    const csv = new Parser().parse(rows);
+    const csv = new Parser({ fields: EXPORT_FIELDS.payments }).parse(rows);
     res.header('Content-Type', 'text/csv');
     res.attachment('payments.csv');
     res.send(csv);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

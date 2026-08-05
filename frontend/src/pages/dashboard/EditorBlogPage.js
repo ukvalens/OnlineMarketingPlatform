@@ -5,7 +5,7 @@ import {
   faEye, faEyeSlash, faSearch, faImage, faNewspaper
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
-import api from '../../api';
+import api, { getImageUrl } from '../../api';
 import './orders.css';
 import './admin-content.css';
 import './editor-blog.css';
@@ -44,7 +44,7 @@ export default function EditorBlogPage() {
   const openEdit = (post) => {
     setForm({ title: post.title, excerpt: post.excerpt || '', body: post.body || '', status: post.status });
     setCoverFile(null);
-    setCoverPreview(post.cover_image ? `http://localhost:5000${post.cover_image}` : null);
+    setCoverPreview(post.cover_image ? getImageUrl(post.cover_image) : null);
     setError('');
     setDrawer({ mode: 'edit', post });
   };
@@ -155,7 +155,7 @@ export default function EditorBlogPage() {
             <div key={post.id} className="blog-row">
               <div className="blog-row__cover">
                 {post.cover_image
-                  ? <img src={`http://localhost:5000${post.cover_image}`} alt={post.title} />
+                  ? <img src={getImageUrl(post.cover_image)} alt={post.title} />
                   : <div className="blog-row__cover-placeholder"><FontAwesomeIcon icon={faImage} /></div>}
               </div>
               <div className="blog-row__body">
