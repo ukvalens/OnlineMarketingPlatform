@@ -6,6 +6,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import api, { exportCsv } from '../../api';
+import usePagination from '../../hooks/usePagination';
+import Pagination from '../../components/Pagination';
 import './orders.css';
 import './invoices.css';
 import './admin-orders.css';
@@ -73,6 +75,9 @@ export default function AdminPaymentsPage() {
       (p.client_name || '').toLowerCase().includes(q);
     return matchStatus && matchMethod && matchSearch;
   });
+
+  const { paged: pagedPayments, page, totalPages, setPage, reset } = usePagination(filtered, 10);
+  useEffect(() => { reset(); }, [filter, methodFilter, search]); // eslint-disable-line
 
   const totalPaid    = payments.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
   const totalPending = payments.filter(p => p.status === 'pending').reduce((s, p) => s + Number(p.amount), 0);
@@ -175,7 +180,7 @@ export default function AdminPaymentsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(p => (
+              {pagedPayments.map(p => (
                 <tr key={p.id}>
                   <td style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-muted)' }}>
                     {p.transaction_ref ? p.transaction_ref.slice(0, 16) + '…' : '—'}
@@ -207,6 +212,7 @@ export default function AdminPaymentsPage() {
           </table>
         )}
       </div>
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} total={filtered.length} pageSize={10} />
 
       {/* ── Record Payment Modal ── */}
       {recordModal && (

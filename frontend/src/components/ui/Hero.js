@@ -1,18 +1,21 @@
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { useLang } from '../../context/LangContext';
 import useBreakpoint from '../../hooks/useBreakpoint';
 import './Hero.css';
 
-const STATS = [
-  { value: '200+', label: 'Clients Served' },
-  { value: '98%', label: 'Satisfaction Rate' },
-  { value: '5+', label: 'Years Experience' },
-  { value: '50+', label: 'Campaigns Launched' },
-];
-
 export default function Hero() {
+  const { t } = useLang();
   const { isDesktop } = useBreakpoint();
+
+  const STATS = [
+    { value: '200+', labelKey: 'hero_stat_clients' },
+    { value: '98%',  labelKey: 'hero_stat_satisfaction' },
+    { value: '5+',   labelKey: 'hero_stat_years' },
+    { value: '50+',  labelKey: 'hero_stat_campaigns' },
+  ];
+
   return (
     <section className="hero">
       <div className="hero__bg-shapes">
@@ -24,36 +27,33 @@ export default function Hero() {
       <div className="container hero__inner">
         <div className="hero__content">
           <div className="hero__badge">
-            <span className="badge badge-accent">🇷🇼 Rwanda's #1 Digital Agency</span>
+            <span className="badge badge-accent">{t('hero_badge')}</span>
           </div>
 
           <h1 className="hero__title">
-            Grow Your Business<br />
-            <span>Online in Rwanda</span>
+            {t('hero_title_1')}<br />
+            <span>{t('hero_title_2')}</span>
           </h1>
 
-          <p className="hero__subtitle">
-            We help small businesses, startups, and entrepreneurs reach more customers through
-            social media marketing, digital advertising, branding, and web promotion.
-          </p>
+          <p className="hero__subtitle">{t('hero_subtitle')}</p>
 
           <div className="hero__cta">
             <Link to="/contact" className="btn btn-primary btn-lg">
-              Get a Free Quote <FontAwesomeIcon icon={faArrowRight} />
+              {t('hero_cta_quote')} <FontAwesomeIcon icon={faArrowRight} />
             </Link>
             <Link to="/portfolio" className="btn btn-outline-white btn-lg hero__play">
               <span className="play-icon"><FontAwesomeIcon icon={faPlay} style={{ fontSize: 12 }} /></span>
-              View Our Work
+              {t('hero_cta_work')}
             </Link>
           </div>
 
           <div className="hero__trust">
             <div className="hero__avatars">
-              {['A','B','C','D'].map((l) => (
+              {['A', 'B', 'C', 'D'].map((l) => (
                 <div key={l} className="hero__avatar">{l}</div>
               ))}
             </div>
-            <p><strong>200+ businesses</strong> trust us to grow their brand</p>
+            <p><strong>200+</strong> {t('hero_trust')}</p>
           </div>
         </div>
 
@@ -70,22 +70,22 @@ export default function Hero() {
                     <div key={i} className="hcard__bar" style={{ height: `${h}%`, animationDelay: `${i * 0.1}s` }} />
                   ))}
                 </div>
-                <p className="hcard__label">↑ 42% reach increase this month</p>
+                <p className="hcard__label">{t('hero_card_reach')}</p>
               </div>
 
               <div className="hero__card hero__card--sm hero__card--top">
                 <div className="hcard__icon">📱</div>
                 <div>
-                  <strong>Social Media</strong>
-                  <p>+1.2K followers</p>
+                  <strong>{t('hero_card_social')}</strong>
+                  <p>{t('hero_card_social_sub')}</p>
                 </div>
               </div>
 
               <div className="hero__card hero__card--sm hero__card--bottom">
                 <div className="hcard__icon">🎯</div>
                 <div>
-                  <strong>Ad Campaigns</strong>
-                  <p>3.8x ROI average</p>
+                  <strong>{t('hero_card_ads')}</strong>
+                  <p>{t('hero_card_ads_sub')}</p>
                 </div>
               </div>
             </>
@@ -96,10 +96,10 @@ export default function Hero() {
       <div className="hero__stats">
         <div className="container">
           <div className="hero__stats-grid">
-            {STATS.map(({ value, label }) => (
-              <div key={label} className="hero__stat">
+            {STATS.map(({ value, labelKey }) => (
+              <div key={labelKey} className="hero__stat">
                 <strong>{value}</strong>
-                <span>{label}</span>
+                <span>{t(labelKey)}</span>
               </div>
             ))}
           </div>

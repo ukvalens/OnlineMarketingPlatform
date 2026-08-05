@@ -6,6 +6,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import api, { getImageUrl } from '../../api';
+import usePagination from '../../hooks/usePagination';
+import Pagination from '../../components/Pagination';
 import './orders.css';
 import './admin-content.css';
 import './editor-blog.css';
@@ -97,6 +99,9 @@ export default function EditorBlogPage() {
     return matchFilter && matchSearch;
   });
 
+  const { paged, page, totalPages, setPage, reset } = usePagination(filtered, 10);
+  useEffect(() => { reset(); }, [filter, search]); // eslint-disable-line
+
   const stats = [
     { label: 'Total Posts',   value: posts.length,                                        color: 'blue',   icon: '📝' },
     { label: 'Published',     value: posts.filter(p => p.status === 'published').length,  color: 'green',  icon: '🌐' },
@@ -151,7 +156,7 @@ export default function EditorBlogPage() {
         </div>
       ) : (
         <div className="blog-list">
-          {filtered.map(post => (
+          {paged.map(post => (
             <div key={post.id} className="blog-row">
               <div className="blog-row__cover">
                 {post.cover_image
@@ -187,6 +192,7 @@ export default function EditorBlogPage() {
           ))}
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} total={filtered.length} pageSize={10} />
 
       {/* ── Editor Drawer ── */}
       {drawer && (

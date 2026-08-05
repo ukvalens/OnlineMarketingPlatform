@@ -3,17 +3,26 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboard, faEye, faXmark, faCheck, faBan, faUpload,
   faPlus, faChevronDown, faChevronUp, faDownload, faSearch,
-  faPaperPlane, faSliders
+  faPaperPlane, faSliders, faMessage
 } from '@fortawesome/free-solid-svg-icons';
+import { Link } from 'react-router-dom';
 import DashboardLayout from './DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
 import api, { exportCsv, getImageUrl } from '../../api';
+import usePagination from '../../hooks/usePagination';
+import Pagination from '../../components/Pagination';
 import './orders.css';
 import './admin-content.css';
 import './admin-orders.css';
 
 const STATUSES = ['all', 'requested', 'quoted', 'confirmed', 'in_progress', 'in_review', 'completed', 'cancelled'];
-const NEXT_STATUSES = ['in_progress', 'in_review', 'completed', 'cancelled'];
+
+// Mirrors the server-side TRANSITIONS map
+const TRANSITIONS = {
+  confirmed:   ['in_progress', 'cancelled'],
+  in_progress: ['in_review',   'cancelled'],
+  in_review:   ['completed',   'in_progress'],
+};
 
 const fmt     = (n) => Number(n).toLocaleString();
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-RW', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -40,6 +49,7 @@ export default function AdminOrdersPage() {
 
   // Quote form
   const [quoteAmount, setQuoteAmount] = useState('');
+  const [quoteTimeline, setQuoteTimeline] = useState('');
 
   // Status update
   const [statusForm, setStatusForm]   = useState({ status: '', progress_percent: '' });
@@ -108,8 +118,8 @@ export default function AdminOrdersPage() {
     e.preventDefault();
     setActionBusy(true); setDrawerError('');
     try {
-      await api.patch(`/orders/${drawer.id}/quote`, { quote_amount: quoteAmount });
-      setQuoteAmount('');
+      await api.patch(`/orders/${drawer.id}/quote`, { quote_amount: quoteAmount, proposed_timeline: quoteTimeline });
+      setQuoteAmount(''); setQuoteTimeline('');
       await refreshDrawer();
     } catch (err) { setDrawerError(err.response?.data?.message || 'Failed to submit quote.'); }
     setActionBusy(false);
@@ -196,6 +206,9 @@ export default function AdminOrdersPage() {
     return matchStatus && matchSearch;
   });
 
+  const { paged: pagedOrders, page, totalPages, setPage, reset } = usePagination(filtered, 10);
+  useEffect(() => { reset(); }, [filter, search]); // eslint-disable-line
+
   const stats = [
     { label: 'Total',       value: orders.length,                                                                    color: 'blue',   icon: '📦' },
     { label: 'Pending',     value: orders.filter(o => ['requested','quoted'].includes(o.status)).length,             color: 'orange', icon: '⏳' },
@@ -265,7 +278,7 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(o => (
+              {pagedOrders.map(o => (
                 <tr key={o.id}>
                   <td><strong>{o.reference}</strong></td>
                   <td>{o.client_name}</td>
@@ -292,6 +305,7 @@ export default function AdminOrdersPage() {
           </table>
         )}
       </div>
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} total={filtered.length} pageSize={10} />
 
       {/* ── Order Management Drawer ── */}
       {drawer && (
@@ -317,6 +331,7 @@ export default function AdminOrdersPage() {
                   <div className="detail-item"><span>Service</span><strong>{detail.service_name}</strong></div>
                   <div className="detail-item"><span>Package</span><strong style={{ textTransform: 'capitalize' }}>{detail.tier || '—'}</strong></div>
                   <div className="detail-item"><span>Quote</span><strong>{detail.quote_amount ? `RWF ${fmt(detail.quote_amount)}` : 'Not set'}</strong></div>
+                  <div className="detail-item"><span>Timeline</span><strong>{detail.proposed_timeline || '—'}</strong></div>
                   <div className="detail-item"><span>Progress</span><strong>{detail.progress_percent}%</strong></div>
                   <div className="detail-item"><span>Placed</span><strong>{fmtDate(detail.created_at)}</strong></div>
                 </div>
@@ -344,6 +359,11 @@ export default function AdminOrdersPage() {
                             <input type="number" min="0" placeholder="e.g. 150000"
                               value={quoteAmount} onChange={e => setQuoteAmount(e.target.value)} required />
                           </div>
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label>Proposed Timeline</label>
+                            <input type="text" placeholder="e.g. 2 weeks"
+                              value={quoteTimeline} onChange={e => setQuoteTimeline(e.target.value)} />
+                          </div>
                           <button type="submit" className="btn btn-primary btn-sm" disabled={actionBusy} style={{ alignSelf: 'flex-end' }}>
                             <FontAwesomeIcon icon={faPaperPlane} /> Send Quote
                           </button>
@@ -352,14 +372,29 @@ export default function AdminOrdersPage() {
                     )}
 
                     {/* ── Status update ── */}
-                    {!['requested', 'cancelled', 'completed'].includes(detail.status) && (
+                    {TRANSITIONS[detail.status] && (
                       <AdminSection title="Update Status" icon={faSliders}>
-                        <form className="admin-action-row" onSubmit={handleStatus}>
+                        {/* State machine flow */}
+                        <div className="state-flow">
+                          {['requested','quoted','confirmed','in_progress','in_review','completed'].map((s, i, arr) => (
+                            <span key={s} className="state-flow__wrap">
+                              <span className={`state-flow__node${
+                                s === detail.status ? ' current' :
+                                ['requested','quoted','confirmed','in_progress','in_review','completed']
+                                  .indexOf(s) < arr.indexOf(detail.status) ? ' done' : ''
+                              }`}>{s.replace('_',' ')}</span>
+                              {i < arr.length - 1 && <span className="state-flow__arrow">›</span>}
+                            </span>
+                          ))}
+                        </div>
+                        <form className="admin-action-row" onSubmit={handleStatus} style={{ marginTop: 12 }}>
                           <div className="form-group" style={{ flex: 1 }}>
-                            <label>New Status *</label>
+                            <label>Move to *</label>
                             <select value={statusForm.status} onChange={e => setStatusForm({ ...statusForm, status: e.target.value })} required>
-                              <option value="">Select status…</option>
-                              {NEXT_STATUSES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+                              <option value="">Select next status…</option>
+                              {(TRANSITIONS[detail.status] || []).map(s => (
+                                <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                              ))}
                             </select>
                           </div>
                           <div className="form-group" style={{ width: 120 }}>
@@ -368,7 +403,7 @@ export default function AdminOrdersPage() {
                               value={statusForm.progress_percent}
                               onChange={e => setStatusForm({ ...statusForm, progress_percent: e.target.value })} />
                           </div>
-                          <button type="submit" className="btn btn-primary btn-sm" disabled={actionBusy} style={{ alignSelf: 'flex-end' }}>
+                          <button type="submit" className="btn btn-primary btn-sm" disabled={actionBusy || !statusForm.status} style={{ alignSelf: 'flex-end' }}>
                             <FontAwesomeIcon icon={faCheck} /> Update
                           </button>
                         </form>
@@ -397,6 +432,9 @@ export default function AdminOrdersPage() {
                         <FontAwesomeIcon icon={faBan} /> Cancel Order
                       </button>
                     )}
+                    <Link to="/dashboard/admin/messages" className="btn btn-outline btn-sm">
+                      <FontAwesomeIcon icon={faMessage} /> Messages
+                    </Link>
                   </>
                 )}
 

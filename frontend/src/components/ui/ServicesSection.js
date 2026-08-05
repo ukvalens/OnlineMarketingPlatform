@@ -3,19 +3,21 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faCheck } from '@fortawesome/free-solid-svg-icons';
 import api, { getImageUrl } from '../../api';
+import { useLang } from '../../context/LangContext';
 import './ServicesSection.css';
 
 const ICONS = {
   'Social Media': '📱',
-  'Advertising': '🎯',
-  'SEO': '🔍',
-  'Design': '🎨',
-  'Branding': '✨',
-  'Consulting': '💼',
-  'E-commerce': '🛒',
+  'Advertising':  '🎯',
+  'SEO':          '🔍',
+  'Design':       '🎨',
+  'Branding':     '✨',
+  'Consulting':   '💼',
+  'E-commerce':   '🛒',
 };
 
 export default function ServicesSection() {
+  const { t } = useLang();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,11 +32,9 @@ export default function ServicesSection() {
     <section className="section services-section">
       <div className="container">
         <div className="text-center" style={{ marginBottom: '56px' }}>
-          <span className="section-label">What We Offer</span>
-          <h2 className="section-title">Services Built for Growth</h2>
-          <p className="section-subtitle">
-            From social media to full brand identity — we have the right package for every business stage and budget.
-          </p>
+          <span className="section-label">{t('services_label')}</span>
+          <h2 className="section-title">{t('services_title')}</h2>
+          <p className="section-subtitle">{t('services_subtitle')}</p>
         </div>
 
         {loading ? (
@@ -67,12 +67,12 @@ export default function ServicesSection() {
 
                 {service.packages?.filter(p => p?.tier).length > 0 && (
                   <div className="service-card__price">
-                    From <strong>RWF {Number(service.packages.filter(p => p?.tier)[0]?.price).toLocaleString()}</strong>
+                    {t('services_from')} <strong>RWF {Number(service.packages.filter(p => p?.tier)[0]?.price).toLocaleString()}</strong>
                   </div>
                 )}
 
-                <Link to={`/services`} className="service-card__link">
-                  Learn more <FontAwesomeIcon icon={faArrowRight} style={{ fontSize: 14 }} />
+                <Link to="/services" className="service-card__link">
+                  {t('services_learn')} <FontAwesomeIcon icon={faArrowRight} style={{ fontSize: 14 }} />
                 </Link>
               </div>
             ))}
@@ -81,7 +81,7 @@ export default function ServicesSection() {
 
         <div className="text-center" style={{ marginTop: '48px' }}>
           <Link to="/services" className="btn btn-outline">
-            View All Services <FontAwesomeIcon icon={faArrowRight} />
+            {t('services_view_all')} <FontAwesomeIcon icon={faArrowRight} />
           </Link>
         </div>
       </div>

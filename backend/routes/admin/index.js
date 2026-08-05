@@ -158,6 +158,28 @@ router.get('/clients/:id/orders', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/admin/messages — all orders with unread counts for staff inbox
+router.get('/messages', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT o.id, o.reference, o.status,
+              u.name AS client_name,
+              su.name AS staff_name,
+              COUNT(m.id) FILTER (WHERE m.is_read=FALSE AND m.sender_id != $1) AS unread,
+              MAX(m.sent_at) AS last_message_at
+       FROM orders o
+       JOIN users u ON u.id = o.client_id
+       LEFT JOIN users su ON su.id = o.assigned_staff_id
+       LEFT JOIN messages m ON m.order_id = o.id
+       GROUP BY o.id, u.name, su.name
+       HAVING COUNT(m.id) > 0
+       ORDER BY last_message_at DESC NULLS LAST`,
+      [req.user.id]
+    );
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
 // GET /api/admin/audit-logs
 router.get('/audit-logs', async (req, res, next) => {
   try {
@@ -168,6 +190,31 @@ router.get('/audit-logs', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// GET /api/admin/contacts
+router.get('/contacts', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, name, email, phone, message, is_read, created_at FROM contact_submissions ORDER BY created_at DESC LIMIT 200`
+    );
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+// PATCH /api/admin/contacts/:id/read — mark as read
+router.patch('/contacts/:id/read', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE contact_submissions SET is_read=TRUE WHERE id=$1 RETURNING id, name, email, is_read`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Contact not found' });
+    await pool.query('INSERT INTO audit_logs (user_id, action, entity, entity_id) VALUES ($1,$2,$3,$4)',
+      [req.user.id, 'MARK_CONTACT_READ', 'contact_submissions', req.params.id]
+    );
+    res.json(rows[0]);
+  } catch (err) { next(err); }
 });
 
 const EXPORT_FIELDS = {
@@ -200,6 +247,84 @@ router.get('/export/orders', async (req, res, next) => {
     res.header('Content-Type', 'text/csv');
     res.attachment('orders.csv');
     res.send(csv);
+  } catch (err) { next(err); }
+});
+
+// GET /api/admin/finance/summary
+router.get('/finance/summary', authorize('admin', 'finance'), async (req, res, next) => {
+  try {
+    const [kpi, monthly, topClients, byMethod, pending] = await Promise.all([
+      pool.query(`
+        SELECT
+          COALESCE(SUM(amount) FILTER (WHERE status='paid'), 0)    AS total_revenue,
+          COALESCE(SUM(amount) FILTER (WHERE status='pending'), 0) AS outstanding,
+          COUNT(*) FILTER (WHERE status='paid')                    AS paid_count,
+          COUNT(*) FILTER (WHERE status='pending')                 AS pending_count,
+          COUNT(*) FILTER (WHERE status='partial')                 AS partial_count,
+          COUNT(*) FILTER (WHERE status='failed')                  AS failed_count,
+          COUNT(*)                                                 AS total_invoices
+        FROM invoices`),
+      pool.query(`
+        SELECT TO_CHAR(DATE_TRUNC('month', p.paid_at), 'Mon YYYY') AS month,
+               DATE_TRUNC('month', p.paid_at) AS month_date,
+               COALESCE(SUM(p.amount), 0) AS revenue
+        FROM payments p
+        WHERE p.status='paid' AND p.paid_at >= NOW() - INTERVAL '12 months'
+        GROUP BY DATE_TRUNC('month', p.paid_at)
+        ORDER BY month_date ASC`),
+      pool.query(`
+        SELECT u.name, u.company_name, u.email,
+               COALESCE(SUM(i.amount) FILTER (WHERE i.status='paid'), 0) AS total_paid,
+               COUNT(DISTINCT o.id) AS order_count
+        FROM users u
+        JOIN orders o ON o.client_id = u.id
+        JOIN invoices i ON i.order_id = o.id
+        WHERE u.role = 'client'
+        GROUP BY u.id
+        ORDER BY total_paid DESC LIMIT 5`),
+      pool.query(`
+        SELECT p.method, COUNT(*) AS count, COALESCE(SUM(p.amount), 0) AS total
+        FROM payments p WHERE p.status='paid'
+        GROUP BY p.method`),
+      pool.query(`
+        SELECT i.id, i.amount, i.due_date, i.created_at, i.status,
+               o.reference, u.name AS client_name
+        FROM invoices i
+        JOIN orders o ON o.id = i.order_id
+        JOIN users u ON u.id = o.client_id
+        WHERE i.status IN ('pending','partial')
+        ORDER BY i.due_date ASC NULLS LAST LIMIT 10`),
+    ]);
+    res.json({
+      kpi: kpi.rows[0],
+      monthly_revenue: monthly.rows,
+      top_clients: topClients.rows,
+      by_method: byMethod.rows,
+      pending_invoices: pending.rows,
+    });
+  } catch (err) { next(err); }
+});
+
+// PATCH /api/admin/finance/payments/:id/confirm
+router.patch('/finance/payments/:id/confirm', authorize('admin', 'finance'), async (req, res, next) => {
+  try {
+    const { transaction_ref } = req.body;
+    const { rows: payRows } = await pool.query('SELECT * FROM payments WHERE id=$1', [req.params.id]);
+    if (!payRows.length) return res.status(404).json({ message: 'Payment not found' });
+    const pay = payRows[0];
+    if (pay.status === 'paid') return res.status(400).json({ message: 'Already confirmed' });
+
+    const { rows } = await pool.query(
+      `UPDATE payments SET status='paid', paid_at=NOW(), transaction_ref=COALESCE($1, transaction_ref)
+       WHERE id=$2 RETURNING *`,
+      [transaction_ref || null, req.params.id]
+    );
+    await pool.query(`UPDATE invoices SET status='paid' WHERE id=$1`, [pay.invoice_id]);
+    await pool.query(
+      'INSERT INTO audit_logs (user_id, action, entity, entity_id, meta) VALUES ($1,$2,$3,$4,$5)',
+      [req.user.id, 'CONFIRM_PAYMENT', 'payments', req.params.id, JSON.stringify({ invoice_id: pay.invoice_id })]
+    );
+    res.json(rows[0]);
   } catch (err) { next(err); }
 });
 

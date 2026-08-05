@@ -32,7 +32,8 @@ export default function PortfolioPage() {
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(3);
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 3;
 
   useEffect(() => {
     api.get('/portfolio').then(({ data }) => setItems(data)).catch(() => {}).finally(() => setLoading(false));
@@ -41,7 +42,8 @@ export default function PortfolioPage() {
   const display = items.length > 0 ? items : PLACEHOLDERS;
   const categories = ['All', ...new Set(display.map(i => i.category).filter(Boolean))];
   const filtered = filter === 'All' ? display : display.filter(i => i.category === filter);
-  const visible = filtered.slice(0, visibleCount);
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const visible = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <Layout>
@@ -58,7 +60,7 @@ export default function PortfolioPage() {
           {/* Category filter */}
           <div className="portfolio-filters">
             {categories.map(cat => (
-              <button key={cat} className={`filter-btn${filter === cat ? ' filter-btn--active' : ''}`} onClick={() => { setFilter(cat); setVisibleCount(3); }}>
+              <button key={cat} className={`filter-btn${filter === cat ? ' filter-btn--active' : ''}`} onClick={() => { setFilter(cat); setPage(1); }}>
                 {cat}
               </button>
             ))}
@@ -91,11 +93,15 @@ export default function PortfolioPage() {
               ))}
             </div>
           )}
-          {!loading && visibleCount < filtered.length && (
-            <div style={{ textAlign: 'center', marginTop: 40 }}>
-              <button className="btn btn-outline" onClick={() => setVisibleCount(v => v + 3)}>
-                View More
-              </button>
+          {!loading && totalPages > 1 && (
+            <div className="portfolio-pagination">
+              <button className="page-btn" onClick={() => setPage(p => p - 1)} disabled={page === 1}>‹</button>
+              {[...Array(totalPages)].map((_, i) => (
+                <button key={i} className={`page-btn${page === i + 1 ? ' page-btn--active' : ''}`} onClick={() => setPage(i + 1)}>
+                  {i + 1}
+                </button>
+              ))}
+              <button className="page-btn" onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>›</button>
             </div>
           )}
         </div>

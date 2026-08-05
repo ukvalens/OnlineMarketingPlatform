@@ -7,6 +7,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import api, { exportCsv } from '../../api';
+import usePagination from '../../hooks/usePagination';
+import Pagination from '../../components/Pagination';
 import './orders.css';
 import './admin-content.css';
 import './admin-users.css';
@@ -64,6 +66,9 @@ export default function AdminClientsPage() {
       (c.phone || '').includes(q);
     return matchStatus && matchSearch;
   });
+
+  const { paged: pagedClients, page, totalPages, setPage, reset } = usePagination(filtered, 10);
+  useEffect(() => { reset(); }, [statusFilter, search]); // eslint-disable-line
 
   const stats = [
     { label: 'Total Clients',  value: clients.length,                                    color: 'blue',   icon: '👥' },
@@ -137,7 +142,7 @@ export default function AdminClientsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(c => (
+              {pagedClients.map(c => (
                 <tr key={c.id} style={{ opacity: c.is_active ? 1 : 0.5 }}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -186,6 +191,7 @@ export default function AdminClientsPage() {
           </table>
         )}
       </div>
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} total={filtered.length} pageSize={10} />
 
       {/* ── Client Detail Drawer ── */}
       {drawer && (

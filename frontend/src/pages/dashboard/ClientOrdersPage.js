@@ -7,6 +7,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import api, { getImageUrl } from '../../api';
+import usePagination from '../../hooks/usePagination';
+import Pagination from '../../components/Pagination';
 import './orders.css';
 
 const STATUSES = ['all', 'requested', 'quoted', 'confirmed', 'in_progress', 'in_review', 'completed', 'cancelled'];
@@ -112,6 +114,9 @@ export default function ClientOrdersPage() {
     return matchStatus && matchSearch;
   });
 
+  const { paged: pagedOrders, page, totalPages, setPage, reset } = usePagination(filtered, 10);
+  useEffect(() => { reset(); }, [filter, search]); // eslint-disable-line
+
   const stats = [
     { label: 'Total', value: orders.length, color: 'blue', icon: '📦' },
     { label: 'Active', value: orders.filter(o => ['requested','quoted','confirmed','in_progress','in_review'].includes(o.status)).length, color: 'purple', icon: '⚡' },
@@ -186,7 +191,7 @@ export default function ClientOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(order => (
+              {pagedOrders.map(order => (
                 <tr key={order.id}>
                   <td><strong>{order.reference}</strong></td>
                   <td>{order.service_name}</td>
@@ -205,6 +210,7 @@ export default function ClientOrdersPage() {
           </table>
         )}
       </div>
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} total={filtered.length} pageSize={10} />
 
       {/* ── New Order Modal ── */}
       {showModal && (
@@ -296,6 +302,7 @@ export default function ClientOrdersPage() {
                   <div className="detail-item"><span>Service</span><strong>{detail.service_name}</strong></div>
                   <div className="detail-item"><span>Package</span><strong style={{ textTransform: 'capitalize' }}>{detail.tier || '—'}</strong></div>
                   <div className="detail-item"><span>Quote</span><strong>{detail.quote_amount ? `RWF ${fmt(detail.quote_amount)}` : 'Pending'}</strong></div>
+                  <div className="detail-item"><span>Timeline</span><strong>{detail.proposed_timeline || '—'}</strong></div>
                   <div className="detail-item"><span>Progress</span><strong>{detail.progress_percent}%</strong></div>
                   <div className="detail-item"><span>Placed</span><strong>{fmtDate(detail.created_at)}</strong></div>
                   <div className="detail-item"><span>Updated</span><strong>{fmtDate(detail.updated_at)}</strong></div>

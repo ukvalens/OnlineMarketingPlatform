@@ -1,3 +1,49 @@
+/* State machine flow indicator */
+.state-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--light);
+  border-radius: var(--radius);
+  font-size: 11px;
+}
+
+.state-flow__wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.state-flow__node {
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.state-flow__node.done {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #15803d;
+}
+
+.state-flow__node.current {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.state-flow__arrow {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+}
+
 /* Wide drawer */
 .drawer--wide {
   max-width: 580px;

@@ -1,26 +1,27 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBullseye, faEye, faHeart, faTrophy, faUsers, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../components/layout/Layout';
 import usePageView from '../../hooks/usePageView';
+import api, { getImageUrl } from '../../api';
 import './About.css';
-
-const TEAM = [
-  { name: 'Jean-Claude Niyonzima', role: 'CEO & Founder', emoji: '👨‍💼', bio: '10+ years in digital marketing across East Africa.' },
-  { name: 'Amina Uwimana', role: 'Creative Director', emoji: '👩‍🎨', bio: 'Award-winning designer with a passion for Rwandan brands.' },
-  { name: 'Eric Habimana', role: 'Head of Digital Ads', emoji: '👨‍💻', bio: 'Google & Meta certified ads specialist.' },
-  { name: 'Grace Mukamana', role: 'Social Media Manager', emoji: '👩‍💼', bio: 'Grew 50+ brand accounts to 10K+ followers.' },
-];
 
 const VALUES = [
   { icon: <FontAwesomeIcon icon={faBullseye} />, title: 'Results First', desc: 'Every strategy is tied to measurable outcomes — reach, leads, and revenue.' },
-  { icon: <FontAwesomeIcon icon={faHeart} />, title: 'Client-Centered', desc: 'We treat every client\'s business like our own, with full dedication.' },
+  { icon: <FontAwesomeIcon icon={faHeart} />, title: 'Client-Centered', desc: "We treat every client's business like our own, with full dedication." },
   { icon: <FontAwesomeIcon icon={faTrophy} />, title: 'Excellence', desc: 'We hold ourselves to the highest standards in everything we deliver.' },
-  { icon: <FontAwesomeIcon icon={faUsers} />, title: 'Community', desc: 'We believe in growing Rwanda\'s digital economy together.' },
+  { icon: <FontAwesomeIcon icon={faUsers} />, title: 'Community', desc: "We believe in growing Rwanda's digital economy together." },
 ];
 
 export default function AboutPage() {
   usePageView();
+  const [team, setTeam] = useState([]);
+
+  useEffect(() => {
+    api.get('/team').then(r => setTeam(r.data)).catch(() => {});
+  }, []);
+
   return (
     <Layout>
       {/* Hero */}
@@ -104,12 +105,17 @@ export default function AboutPage() {
             <h2 className="section-title">Meet Our Team</h2>
           </div>
           <div className="about__team-grid">
-            {TEAM.map(({ name, role, emoji, bio }) => (
-              <div key={name} className="about__team-card card" style={{ padding: 28, textAlign: 'center' }}>
-                <div className="about__team-avatar">{emoji}</div>
-                <h4>{name}</h4>
-                <span className="about__team-role">{role}</span>
-                <p>{bio}</p>
+            {team.length === 0 && <p style={{ color: '#888' }}>No team members yet.</p>}
+            {team.map((m) => (
+              <div key={m.id} className="about__team-card card" style={{ padding: 28, textAlign: 'center' }}>
+                <div className="about__team-avatar">
+                  {m.avatar_url
+                    ? <img src={getImageUrl(m.avatar_url)} alt={m.name} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover' }} />
+                    : <span style={{ fontSize: 48 }}>&#128100;</span>}
+                </div>
+                <h4>{m.name}</h4>
+                <span className="about__team-role">{m.role}</span>
+                <p>{m.bio}</p>
               </div>
             ))}
           </div>

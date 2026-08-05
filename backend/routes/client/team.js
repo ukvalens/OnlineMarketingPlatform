@@ -8,7 +8,7 @@ const upload = require('../../config/multer');
 router.get('/', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT * FROM team_members WHERE is_published=TRUE ORDER BY sort_order ASC, created_at ASC'
+      'SELECT * FROM team_members WHERE is_published=TRUE ORDER BY display_order ASC, created_at ASC'
     );
     res.json(rows);
   } catch (err) { next(err); }
@@ -17,7 +17,7 @@ router.get('/', async (req, res, next) => {
 // GET /api/team/all — admin/editor sees all including unpublished
 router.get('/all', authenticate, authorize('admin', 'editor'), async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM team_members ORDER BY sort_order ASC, created_at ASC');
+    const { rows } = await pool.query('SELECT * FROM team_members ORDER BY display_order ASC, created_at ASC');
     res.json(rows);
   } catch (err) { next(err); }
 });
@@ -25,12 +25,12 @@ router.get('/all', authenticate, authorize('admin', 'editor'), async (req, res, 
 // POST /api/team — admin/editor
 router.post('/', authenticate, authorize('admin', 'editor'), upload.single('photo'), async (req, res, next) => {
   try {
-    const { name, role, bio, sort_order, is_published } = req.body;
-    const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
+    const { name, role, bio, display_order, is_published } = req.body;
+    const avatar_url = req.file ? `/uploads/${req.file.filename}` : null;
     const { rows } = await pool.query(
-      `INSERT INTO team_members (name, role, bio, photo_url, sort_order, is_published)
+      `INSERT INTO team_members (name, role, bio, avatar_url, display_order, is_published)
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [name, role, bio, photo_url, sort_order || 0, is_published ?? true]
+      [name, role, bio, avatar_url, display_order || 0, is_published ?? true]
     );
     res.status(201).json(rows[0]);
   } catch (err) { next(err); }
@@ -39,15 +39,15 @@ router.post('/', authenticate, authorize('admin', 'editor'), upload.single('phot
 // PUT /api/team/:id — admin/editor
 router.put('/:id', authenticate, authorize('admin', 'editor'), upload.single('photo'), async (req, res, next) => {
   try {
-    const { name, role, bio, sort_order, is_published } = req.body;
-    const photo_url = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const { name, role, bio, display_order, is_published } = req.body;
+    const avatar_url = req.file ? `/uploads/${req.file.filename}` : undefined;
     const { rows } = await pool.query(
       `UPDATE team_members SET
         name=COALESCE($1,name), role=COALESCE($2,role), bio=COALESCE($3,bio),
-        photo_url=COALESCE($4,photo_url), sort_order=COALESCE($5,sort_order),
+        avatar_url=COALESCE($4,avatar_url), display_order=COALESCE($5,display_order),
         is_published=COALESCE($6,is_published)
        WHERE id=$7 RETURNING *`,
-      [name, role, bio, photo_url, sort_order, is_published, req.params.id]
+      [name, role, bio, avatar_url, display_order, is_published, req.params.id]
     );
     if (!rows.length) return res.status(404).json({ message: 'Not found' });
     res.json(rows[0]);

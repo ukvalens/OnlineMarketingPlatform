@@ -202,6 +202,16 @@
 
   .navbar__links-auth .btn { flex: 1; justify-content: center; }
 
+  /* Language switcher row inside mobile menu */
+  .navbar__links-lang {
+    display: flex;
+    justify-content: flex-start;
+    padding: 8px 4px 0;
+  }
+
+  /* Hide desktop lang switcher in actions on mobile */
+  .navbar__actions .lang-switcher { display: none; }
+
   /* Hide Login/Get Started buttons — use mobile menu instead */
   .navbar__actions .btn { display: none; }
   .navbar__username { display: none; }

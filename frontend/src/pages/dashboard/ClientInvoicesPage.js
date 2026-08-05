@@ -6,6 +6,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import api from '../../api';
+import usePagination from '../../hooks/usePagination';
+import Pagination from '../../components/Pagination';
 import './orders.css';
 import './invoices.css';
 
@@ -71,6 +73,9 @@ export default function ClientInvoicesPage() {
 
   const filtered = invoices.filter(i => filter === 'all' || i.status === filter);
 
+  const { paged: pagedInvoices, page, totalPages, setPage, reset } = usePagination(filtered, 10);
+  useEffect(() => { reset(); }, [filter]); // eslint-disable-line
+
   const stats = [
     { label: 'Total',   value: invoices.length,                                          color: 'blue',   icon: '📄' },
     { label: 'Unpaid',  value: invoices.filter(i => i.status === 'pending').length,      color: 'orange', icon: '⏳' },
@@ -133,7 +138,7 @@ export default function ClientInvoicesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(inv => (
+              {pagedInvoices.map(inv => (
                 <tr key={inv.id}>
                   <td><strong>{inv.reference}</strong></td>
                   <td><strong>{fmt(inv.amount)}</strong></td>
@@ -162,6 +167,7 @@ export default function ClientInvoicesPage() {
           </table>
         )}
       </div>
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} total={filtered.length} pageSize={10} />
 
       {/* ── Pay Modal ── */}
       {payTarget && (

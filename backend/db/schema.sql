@@ -1,6 +1,8 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Changes made until now: added user, service, order, payment, invoice, message, portfolio, blog, testimonial, contact, audit log, and team member tables with supporting enums, relationships, and indexes.
+
 -- ENUM types
 CREATE TYPE user_role AS ENUM ('client', 'staff', 'editor', 'finance', 'admin');
 CREATE TYPE order_status AS ENUM ('requested', 'quoted', 'confirmed', 'in_progress', 'in_review', 'completed', 'cancelled');
@@ -59,6 +61,7 @@ CREATE TABLE orders (
   assigned_staff_id UUID REFERENCES users(id),
   status order_status NOT NULL DEFAULT 'requested',
   quote_amount NUMERIC(12, 2),
+  proposed_timeline VARCHAR(200),
   progress_percent INTEGER DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100),
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),

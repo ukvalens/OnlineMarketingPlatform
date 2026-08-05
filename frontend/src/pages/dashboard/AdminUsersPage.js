@@ -8,6 +8,8 @@ import {
 import DashboardLayout from './DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api';
+import usePagination from '../../hooks/usePagination';
+import Pagination from '../../components/Pagination';
 import './orders.css';
 import './admin-content.css';
 import './admin-users.css';
@@ -123,6 +125,9 @@ export default function AdminUsersPage() {
     return matchRole && matchStatus && matchSearch;
   });
 
+  const { paged: pagedUsers, page, totalPages, setPage, reset } = usePagination(filtered, 10);
+  useEffect(() => { reset(); }, [filtered.length, roleFilter, statusFilter, search]); // eslint-disable-line
+
   const stats = [
     { label: 'Total Users',  value: users.length,                                                          color: 'blue',   icon: '👥' },
     { label: 'Clients',      value: users.filter(u => u.role === 'client').length,                         color: 'purple', icon: '🧑‍💼' },
@@ -217,7 +222,7 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(u => (
+              {pagedUsers.map(u => (
                 <tr key={u.id} style={{ opacity: u.is_active ? 1 : 0.5 }}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -276,6 +281,7 @@ export default function AdminUsersPage() {
           </table>
         )}
       </div>
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} total={filtered.length} pageSize={10} />
 
       {/* ── Create User Modal ── */}
       {createModal && (

@@ -25,7 +25,7 @@ export default function BlogPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const PER_PAGE = 6;
+  const PER_PAGE = 3;
 
   useEffect(() => {
     api.get('/blog?limit=50').then(({ data }) => setPosts(data)).catch(() => {}).finally(() => setLoading(false));
@@ -34,8 +34,8 @@ export default function BlogPage() {
   const isPlaceholder = posts.length === 0;
   const display = isPlaceholder ? PLACEHOLDERS : posts;
   const filtered = display.filter(p => p.title.toLowerCase().includes(search.toLowerCase()));
-  const paginated = filtered.slice(0, page * PER_PAGE);
-  const hasMore = paginated.length < filtered.length;
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <Layout>
@@ -90,9 +90,15 @@ export default function BlogPage() {
                   );
                 })}
               </div>
-              {hasMore && (
-                <div style={{ textAlign:'center', marginTop:40 }}>
-                  <button className="btn btn-outline" onClick={() => setPage(p => p + 1)}>Load More Articles</button>
+              {totalPages > 1 && (
+                <div className="portfolio-pagination" style={{ marginTop: 48 }}>
+                  <button className="page-btn" onClick={() => setPage(p => p - 1)} disabled={page === 1}>‹</button>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button key={i} className={`page-btn${page === i + 1 ? ' page-btn--active' : ''}`} onClick={() => setPage(i + 1)}>
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button className="page-btn" onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>›</button>
                 </div>
               )}
             </>

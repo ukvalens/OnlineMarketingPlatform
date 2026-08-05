@@ -22,9 +22,10 @@ const NAV = {
   ],
   staff: [
     { label: 'Overview', to: '/dashboard/admin', icon: <FontAwesomeIcon icon={faHouse} />, end: true },
-    { label: 'Orders', to: '/dashboard/admin/orders', icon: <FontAwesomeIcon icon={faClipboard} /> },
+    { label: 'Orders',   to: '/dashboard/admin/orders',   icon: <FontAwesomeIcon icon={faClipboard} /> },
     { label: 'Messages', to: '/dashboard/admin/messages', icon: <FontAwesomeIcon icon={faMessage} /> },
-    { label: 'Clients', to: '/dashboard/admin/clients', icon: <FontAwesomeIcon icon={faUsers} /> },
+    { label: 'Clients',  to: '/dashboard/admin/clients',  icon: <FontAwesomeIcon icon={faUsers} /> },
+    { label: 'Profile',  to: '/profile',                  icon: <FontAwesomeIcon icon={faUser} /> },
   ],
   editor: [
     { label: 'Overview', to: '/dashboard/admin', icon: <FontAwesomeIcon icon={faHouse} />, end: true },

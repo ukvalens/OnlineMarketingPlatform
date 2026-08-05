@@ -3,25 +3,28 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faXmark, faChevronDown, faUser, faRightFromBracket, faTableCells } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
+import { useLang } from '../../context/LangContext';
+import LanguageSwitcher from '../LanguageSwitcher';
 import useBreakpoint from '../../hooks/useBreakpoint';
 import './Navbar.css';
 
-const NAV_LINKS = [
-  { label: 'Home', to: '/' },
-  { label: 'Services', to: '/services' },
-  { label: 'Portfolio', to: '/portfolio' },
-  { label: 'Blog', to: '/blog' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-];
-
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { isDesktop } = useBreakpoint();
+
+  const NAV_LINKS = [
+    { labelKey: 'nav_home',      to: '/' },
+    { labelKey: 'nav_services',  to: '/services' },
+    { labelKey: 'nav_portfolio', to: '/portfolio' },
+    { labelKey: 'nav_blog',      to: '/blog' },
+    { labelKey: 'nav_about',     to: '/about' },
+    { labelKey: 'nav_contact',   to: '/contact' },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -29,7 +32,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Auto-close mobile menu when resizing to desktop
   useEffect(() => { if (isDesktop) { setOpen(false); setDropdownOpen(false); } }, [isDesktop]);
 
   const handleLogout = () => {
@@ -38,7 +40,9 @@ export default function Navbar() {
     navigate('/');
   };
 
-  const dashboardPath = ['admin','staff','editor','finance'].includes(user?.role) ? '/dashboard/admin' : '/dashboard/client';
+  const dashboardPath = ['admin', 'staff', 'editor', 'finance'].includes(user?.role)
+    ? '/dashboard/admin'
+    : '/dashboard/client';
 
   return (
     <nav className={`navbar${scrolled ? ' navbar--scrolled' : ''}`}>
@@ -49,7 +53,7 @@ export default function Navbar() {
         </Link>
 
         <ul className={`navbar__links${open ? ' navbar__links--open' : ''}`}>
-          {NAV_LINKS.map(({ label, to }) => (
+          {NAV_LINKS.map(({ labelKey, to }) => (
             <li key={to}>
               <NavLink
                 to={to}
@@ -57,20 +61,25 @@ export default function Navbar() {
                 className={({ isActive }) => isActive ? 'active' : ''}
                 onClick={() => setOpen(false)}
               >
-                {label}
+                {t(labelKey)}
               </NavLink>
             </li>
           ))}
-          {/* Auth links inside mobile menu */}
+          {!isDesktop && (
+            <li className="navbar__links-lang">
+              <LanguageSwitcher />
+            </li>
+          )}
           {!isDesktop && !user && (
             <li className="navbar__links-auth">
-              <Link to="/login" className="btn btn-outline btn-sm" onClick={() => setOpen(false)}>Login</Link>
-              <Link to="/register" className="btn btn-primary btn-sm" onClick={() => setOpen(false)}>Get Started</Link>
+              <Link to="/login" className="btn btn-outline btn-sm" onClick={() => setOpen(false)}>{t('nav_login')}</Link>
+              <Link to="/register" className="btn btn-primary btn-sm" onClick={() => setOpen(false)}>{t('nav_get_started')}</Link>
             </li>
           )}
         </ul>
 
         <div className="navbar__actions">
+          <LanguageSwitcher />
           {user ? (
             <div className="navbar__user" onClick={() => setDropdownOpen(!dropdownOpen)}>
               <div className="navbar__avatar">{user.name?.[0]?.toUpperCase()}</div>
@@ -79,27 +88,29 @@ export default function Navbar() {
               {dropdownOpen && (
                 <div className="navbar__dropdown">
                   <Link to={dashboardPath} onClick={() => setDropdownOpen(false)}>
-                    <FontAwesomeIcon icon={faTableCells} /> Dashboard
+                    <FontAwesomeIcon icon={faTableCells} /> {t('nav_dashboard')}
                   </Link>
                   <Link to="/profile" onClick={() => setDropdownOpen(false)}>
-                    <FontAwesomeIcon icon={faUser} /> Profile
+                    <FontAwesomeIcon icon={faUser} /> {t('nav_profile')}
                   </Link>
                   <button onClick={handleLogout}>
-                    <FontAwesomeIcon icon={faRightFromBracket} /> Logout
+                    <FontAwesomeIcon icon={faRightFromBracket} /> {t('nav_logout')}
                   </button>
                 </div>
               )}
             </div>
           ) : (
             <>
-              <Link to="/login" className="btn btn-outline btn-sm">Login</Link>
-              <Link to="/register" className="btn btn-primary btn-sm">Get Started</Link>
+              <Link to="/login" className="btn btn-outline btn-sm">{t('nav_login')}</Link>
+              <Link to="/register" className="btn btn-primary btn-sm">{t('nav_get_started')}</Link>
             </>
           )}
         </div>
 
         <button className="navbar__burger" onClick={() => setOpen(!open)} aria-label="Toggle menu">
-          {open ? <FontAwesomeIcon icon={faXmark} style={{ fontSize: 22 }} /> : <FontAwesomeIcon icon={faBars} style={{ fontSize: 22 }} />}
+          {open
+            ? <FontAwesomeIcon icon={faXmark} style={{ fontSize: 22 }} />
+            : <FontAwesomeIcon icon={faBars} style={{ fontSize: 22 }} />}
         </button>
       </div>
     </nav>

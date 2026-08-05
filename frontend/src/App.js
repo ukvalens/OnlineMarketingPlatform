@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { LangProvider } from './context/LangContext';
 import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
 
@@ -19,7 +20,10 @@ import AdminClientsPage from './pages/dashboard/AdminClientsPage';
 import AdminInvoicesPage from './pages/dashboard/AdminInvoicesPage';
 import AdminPaymentsPage from './pages/dashboard/AdminPaymentsPage';
 import AdminAnalyticsPage from './pages/dashboard/AdminAnalyticsPage';
+import AdminSettingsPage from './pages/dashboard/AdminSettingsPage';
 import EditorBlogPage from './pages/dashboard/EditorBlogPage';
+import ClientMessagesPage from './pages/dashboard/ClientMessagesPage';
+import AdminMessagesPage from './pages/dashboard/AdminMessagesPage';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import ServicesPage from './pages/public/ServicesPage';
 import PortfolioPage from './pages/public/PortfolioPage';
@@ -41,6 +45,7 @@ const Soon = ({ title }) => (
 
 export default function App() {
   return (
+    <LangProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -71,7 +76,7 @@ export default function App() {
             <ProtectedRoute roles={['client']}><ClientOrdersPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/client/messages" element={
-            <ProtectedRoute roles={['client']}><Soon title="Messages" /></ProtectedRoute>
+            <ProtectedRoute roles={['client']}><ClientMessagesPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/client/invoices" element={
             <ProtectedRoute roles={['client']}><ClientInvoicesPage /></ProtectedRoute>
@@ -98,7 +103,7 @@ export default function App() {
             <ProtectedRoute roles={['admin', 'staff']}><AdminClientsPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/messages" element={
-            <ProtectedRoute roles={STAFF_ROLES}><Soon title="Messages" /></ProtectedRoute>
+            <ProtectedRoute roles={STAFF_ROLES}><AdminMessagesPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/invoices" element={
             <ProtectedRoute roles={['admin', 'finance']}><AdminInvoicesPage /></ProtectedRoute>
@@ -119,7 +124,7 @@ export default function App() {
             <ProtectedRoute roles={['admin']}><AdminUsersPage /></ProtectedRoute>
           } />
           <Route path="/dashboard/admin/settings" element={
-            <ProtectedRoute roles={['admin']}><Soon title="Settings" /></ProtectedRoute>
+            <ProtectedRoute roles={['admin']}><AdminSettingsPage /></ProtectedRoute>
           } />
 
           {/* Legacy /dashboard redirect → role-based */}
@@ -129,5 +134,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </LangProvider>
   );
 }

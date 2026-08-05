@@ -6,17 +6,29 @@ const authenticate = require('../../middleware/authenticate');
 const authorize = require('../../middleware/authorize');
 const validate = require('../../middleware/validate');
 const sendEmail = require('../../config/email');
+const sendSms = require('../../config/sms');
 const upload = require('../../config/multer');
 
 const generateRef = () => 'ORD-' + Date.now().toString(36).toUpperCase();
 
-const notifyOrderUpdate = async (orderId, subject, message) => {
+const notifyOrderUpdate = async (orderId, subject, message, notifyStaff = false) => {
   const { rows } = await pool.query(
-    `SELECT u.email, u.name FROM orders o JOIN users u ON u.id = o.client_id WHERE o.id=$1`,
+    `SELECT u.email, u.name, u.phone,
+            su.email AS staff_email, su.name AS staff_name, su.phone AS staff_phone
+     FROM orders o
+     JOIN users u ON u.id = o.client_id
+     LEFT JOIN users su ON su.id = o.assigned_staff_id
+     WHERE o.id=$1`,
     [orderId]
   );
-  if (rows.length) {
-    await sendEmail({ to: rows[0].email, subject, html: `<p>Hi ${rows[0].name},</p><p>${message}</p>` }).catch(() => {});
+  if (!rows.length) return;
+  const { email, name, phone, staff_email, staff_name, staff_phone } = rows[0];
+  const html = (recipient) => `<p>Hi ${recipient},</p><p>${message}</p>`;
+  await sendEmail({ to: email, subject, html: html(name) }).catch(() => {});
+  await sendSms({ to: phone, body: `${subject}: ${message}` }).catch(() => {});
+  if (notifyStaff && staff_email) {
+    await sendEmail({ to: staff_email, subject: `[Staff] ${subject}`, html: html(staff_name) }).catch(() => {});
+    await sendSms({ to: staff_phone, body: `[Staff] ${subject}: ${message}` }).catch(() => {});
   }
 };
 
@@ -86,18 +98,23 @@ router.patch(
   '/:id/quote',
   authenticate,
   authorize('staff', 'admin'),
-  [body('quote_amount').isNumeric()],
+  [body('quote_amount').isNumeric(), body('proposed_timeline').optional().trim()],
   validate,
   async (req, res, next) => {
     try {
-      const { quote_amount } = req.body;
+      const { quote_amount, proposed_timeline } = req.body;
       const { rows } = await pool.query(
-        `UPDATE orders SET quote_amount=$1, status='quoted', updated_at=NOW()
-         WHERE id=$2 AND status='requested' RETURNING *`,
-        [quote_amount, req.params.id]
+        `UPDATE orders SET quote_amount=$1, proposed_timeline=$2, status='quoted', updated_at=NOW()
+         WHERE id=$3 AND status='requested' RETURNING *`,
+        [quote_amount, proposed_timeline || null, req.params.id]
       );
       if (!rows.length) return res.status(404).json({ message: 'Order not found or already quoted' });
-      await notifyOrderUpdate(rows[0].id, 'Your Quote is Ready', `Your quote of RWF ${quote_amount} is ready. Log in to accept.`);
+      const timelineNote = proposed_timeline ? ` Estimated timeline: ${proposed_timeline}.` : '';
+      await notifyOrderUpdate(
+        rows[0].id,
+        'Your Quote is Ready',
+        `Your quote of RWF ${quote_amount} is ready.${timelineNote} Log in to accept.`
+      );
       res.json(rows[0]);
     } catch (err) {
       next(err);
@@ -127,6 +144,13 @@ router.patch('/:id/confirm', authenticate, authorize('client'), async (req, res,
   }
 });
 
+// Valid forward transitions enforced server-side
+const TRANSITIONS = {
+  confirmed:   ['in_progress', 'cancelled'],
+  in_progress: ['in_review',   'cancelled'],
+  in_review:   ['completed',   'in_progress'],
+};
+
 // PATCH /api/orders/:id/status — staff/admin updates status
 router.patch(
   '/:id/status',
@@ -136,15 +160,33 @@ router.patch(
   validate,
   async (req, res, next) => {
     try {
-      const { status, progress_percent, assigned_staff_id } = req.body;
+      const { status, progress_percent } = req.body;
+
+      // Fetch current status first
+      const { rows: cur } = await pool.query('SELECT status FROM orders WHERE id=$1', [req.params.id]);
+      if (!cur.length) return res.status(404).json({ message: 'Order not found' });
+
+      const allowed = TRANSITIONS[cur[0].status];
+      if (!allowed || !allowed.includes(status)) {
+        return res.status(422).json({
+          message: `Cannot move from '${cur[0].status}' to '${status}'.`,
+          allowed: allowed || [],
+        });
+      }
+
       const { rows } = await pool.query(
-        `UPDATE orders SET status=$1, progress_percent=COALESCE($2, progress_percent),
-          assigned_staff_id=COALESCE($3, assigned_staff_id), updated_at=NOW()
-         WHERE id=$4 RETURNING *`,
-        [status, progress_percent, assigned_staff_id || null, req.params.id]
+        `UPDATE orders SET status=$1,
+          progress_percent=COALESCE($2, progress_percent),
+          updated_at=NOW()
+         WHERE id=$3 RETURNING *`,
+        [status, progress_percent ?? null, req.params.id]
       );
-      if (!rows.length) return res.status(404).json({ message: 'Order not found' });
-      await notifyOrderUpdate(rows[0].id, `Order ${rows[0].reference} Updated`, `Your order status is now: ${status}.`);
+      await notifyOrderUpdate(
+        rows[0].id,
+        `Order ${rows[0].reference} Updated`,
+        `Your order status is now: ${status.replace('_', ' ')}.`,
+        true
+      );
       res.json(rows[0]);
     } catch (err) {
       next(err);

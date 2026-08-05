@@ -6,6 +6,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import api, { exportCsv } from '../../api';
+import usePagination from '../../hooks/usePagination';
+import Pagination from '../../components/Pagination';
 import './orders.css';
 import './invoices.css';
 import './admin-orders.css';
@@ -98,6 +100,9 @@ export default function AdminInvoicesPage() {
     return matchStatus && matchSearch;
   });
 
+  const { paged: pagedInvoices, page, totalPages, setPage, reset } = usePagination(filtered, 10);
+  useEffect(() => { reset(); }, [filter, search]); // eslint-disable-line
+
   const totalRevenue = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + Number(i.amount), 0);
   const totalPending = invoices.filter(i => i.status === 'pending').reduce((s, i) => s + Number(i.amount), 0);
 
@@ -175,7 +180,7 @@ export default function AdminInvoicesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(inv => (
+              {pagedInvoices.map(inv => (
                 <tr key={inv.id}>
                   <td><strong>{inv.reference}</strong></td>
                   <td style={{ fontSize: 13 }}>{inv.client_name || '—'}</td>
@@ -205,6 +210,7 @@ export default function AdminInvoicesPage() {
           </table>
         )}
       </div>
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} total={filtered.length} pageSize={10} />
 
       {/* ── Create Invoice Modal ── */}
       {createModal && (
