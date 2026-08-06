@@ -1,9 +1,26 @@
+/**
+ * frontend/src/pages/dashboard/AdminUsersPage.js
+ *
+ * Admin page for managing all platform users.
+ *
+ * Changes:
+ * - Initial implementation: user table with role/status filters, search, and pagination.
+ * - Added stat cards (total, clients, staff/admin, inactive) and role summary cards.
+ * - Added Create User modal with full form (name, email, password, phone, company, role).
+ * - Added Edit Role modal with role-picker grid and role descriptions.
+ * - Added Toggle Active (deactivate / reactivate) per user row and detail drawer.
+ * - Added User Detail drawer with info grid, actions, and audit history log.
+ * - Added handleDelete: calls DELETE /admin/users/:id with a confirmation dialog.
+ * - Added trash button in the table row actions (hidden for self).
+ * - Added "Delete Permanently" button in the detail drawer actions.
+ * - Imported faTrash icon.
+ */
 import { useEffect, useState, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUserCheck, faUserXmark, faEdit, faXmark, faCheck,
   faSearch, faPlus, faUser, faDownload, faShield,
-  faClockRotateLeft, faEye
+  faClockRotateLeft, faEye, faTrash
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
@@ -112,6 +129,18 @@ export default function AdminUsersPage() {
     const { data } = await api.get(`/admin/users/${u.id}/audit`).catch(() => ({ data: [] }));
     setAuditLog(data);
     setAuditLoading(false);
+  };
+
+  /* ── Delete user ── */
+  const handleDelete = async (u) => {
+    if (!window.confirm(`Permanently delete ${u.name} (${u.email})? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/admin/users/${u.id}`);
+      setUsers(prev => prev.filter(x => x.id !== u.id));
+      if (drawer?.id === u.id) setDrawer(null);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete user.');
+    }
   };
 
   /* ── Filtered list ── */
@@ -270,6 +299,9 @@ export default function AdminUsersPage() {
                             title={u.is_active ? 'Deactivate' : 'Reactivate'}
                           >
                             <FontAwesomeIcon icon={u.is_active ? faUserXmark : faUserCheck} />
+                          </button>
+                          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u)} title="Delete permanently">
+                            <FontAwesomeIcon icon={faTrash} />
                           </button>
                         </>
                       )}
@@ -430,6 +462,9 @@ export default function AdminUsersPage() {
                   >
                     <FontAwesomeIcon icon={drawer.is_active ? faUserXmark : faUserCheck} />
                     {drawer.is_active ? ' Deactivate' : ' Reactivate'}
+                  </button>
+                  <button className="btn btn-danger" onClick={() => handleDelete(drawer)}>
+                    <FontAwesomeIcon icon={faTrash} /> Delete Permanently
                   </button>
                 </div>
               )}
