@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import ClientDashboard from './pages/dashboard/ClientDashboard';
 import ClientOrdersPage from './pages/dashboard/ClientOrdersPage';
 import ClientInvoicesPage from './pages/dashboard/ClientInvoicesPage';
@@ -32,6 +33,7 @@ import BlogPostPage from './pages/public/BlogPostPage';
 import AboutPage from './pages/public/AboutPage';
 import ContactPage from './pages/public/ContactPage';
 import { PrivacyPage, TermsPage } from './pages/public/LegalPages';
+import VerifyReceiptPage from './pages/public/VerifyReceiptPage';
 
 const STAFF_ROLES = ['admin', 'staff', 'editor', 'finance'];
 
@@ -59,12 +61,14 @@ export default function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/verify/receipt/:id" element={<VerifyReceiptPage />} />
 
           {/* Guest only (redirect if logged in) */}
           <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
           <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
           <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
           <Route path="/reset-password" element={<GuestRoute><ResetPasswordPage /></GuestRoute>} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
 
           {/* Client dashboard */}
           <Route path="/dashboard/client" element={

@@ -1,3 +1,10 @@
+/**
+ * frontend/src/pages/dashboard/DashboardLayout.js
+ *
+ * Changes:
+ * - Removed the "← Public Site" button from the topbar.
+ * - Removed <Footer /> from the bottom of the dashboard layout.
+ */
 import { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,7 +15,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import { getImageUrl } from '../../api';
-import Footer from '../../components/layout/Footer';
 import useBreakpoint from '../../hooks/useBreakpoint';
 import './dashboard.css';
 
@@ -124,7 +130,6 @@ export default function DashboardLayout({ children, pageTitle, pageSubtitle }) {
             {pageSubtitle && <p>{pageSubtitle}</p>}
           </div>
           <div className="topbar__actions">
-            <Link to="/" className="btn btn-outline btn-sm">← Public Site</Link>
             <Link to="/profile" className="topbar__avatar" title="My Profile">
               {user?.avatar_url
                 ? <img src={getImageUrl(user.avatar_url)} alt={user.name} />
@@ -140,8 +145,6 @@ export default function DashboardLayout({ children, pageTitle, pageSubtitle }) {
         <div className="dashboard__content">
           {children}
         </div>
-
-        <Footer />
       </div>
     </div>
   );

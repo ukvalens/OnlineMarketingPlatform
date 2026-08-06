@@ -2,8 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faFileLines, faXmark, faCreditCard, faMobileAlt,
-  faCheckCircle, faChevronDown, faChevronUp, faPrint
+  faCheckCircle, faChevronDown, faChevronUp
 } from '@fortawesome/free-solid-svg-icons';
+import ReceiptCard from '../../components/ReceiptCard';
 import DashboardLayout from './DashboardLayout';
 import api from '../../api';
 import usePagination from '../../hooks/usePagination';
@@ -262,72 +263,11 @@ export default function ClientInvoicesPage() {
               </div>
               <button className="modal__close" onClick={() => setReceipt(null)}><FontAwesomeIcon icon={faXmark} /></button>
             </div>
-
             {receiptLoading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
-                <span className="spinner" />
-              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><span className="spinner" /></div>
             ) : (
               <div className="drawer__body">
-                <div className="receipt-card">
-                  <div className="receipt-header">
-                    <div className="receipt-logo">DM<span>RW</span></div>
-                    <div>
-                      <div className="receipt-title">Payment Receipt</div>
-                      <div className="receipt-sub">DigitalMarkRW</div>
-                    </div>
-                  </div>
-
-                  <div className="receipt-divider" />
-
-                  <div className="detail-grid">
-                    <div className="detail-item"><span>Client</span><strong>{receipt.client_name}</strong></div>
-                    <div className="detail-item"><span>Email</span><strong style={{ fontSize: 12 }}>{receipt.email}</strong></div>
-                    <div className="detail-item"><span>Order Ref</span><strong>{receipt.reference}</strong></div>
-                    <div className="detail-item"><span>Status</span>
-                      <strong><span className={`status-badge status-badge--${receipt.status}`}>{receipt.status}</span></strong>
-                    </div>
-                    <div className="detail-item"><span>Amount</span><strong>RWF {fmt(receipt.amount)}</strong></div>
-                    <div className="detail-item"><span>Currency</span><strong>{receipt.currency}</strong></div>
-                  </div>
-
-                  <div className="receipt-divider" />
-
-                  {/* Payments */}
-                  <strong style={{ fontSize: 13 }}>Payment Transactions</strong>
-                  {receipt.payments?.filter(p => p.paid_at).length === 0 ? (
-                    <p className="detail-empty" style={{ marginTop: 8 }}>No completed payments recorded.</p>
-                  ) : (
-                    <ul className="receipt-payments">
-                      {receipt.payments?.filter(p => p.paid_at).map((p, i) => (
-                        <li key={i} className="receipt-payment-item">
-                          <div>
-                            <strong style={{ textTransform: 'capitalize' }}>{p.method?.replace('_', ' ')}</strong>
-                            <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block' }}>
-                              Ref: {p.ref}
-                            </span>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <strong>RWF {fmt(p.amount)}</strong>
-                            <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block' }}>
-                              {fmtDate(p.paid_at)}
-                            </span>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  <div className="receipt-divider" />
-                  <div className="receipt-total">
-                    <span>Total Paid</span>
-                    <strong>RWF {fmt(receipt.amount)}</strong>
-                  </div>
-                </div>
-
-                <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }} onClick={() => window.print()}>
-                  <FontAwesomeIcon icon={faPrint} /> Print Receipt
-                </button>
+                <ReceiptCard receipt={receipt} />
               </div>
             )}
           </div>

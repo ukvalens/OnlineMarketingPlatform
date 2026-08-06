@@ -20,11 +20,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUserCheck, faUserXmark, faEdit, faXmark, faCheck,
   faSearch, faPlus, faUser, faDownload, faShield,
-  faClockRotateLeft, faEye, faTrash
+  faClockRotateLeft, faEye, faTrash, faPrint
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../api';
+import api, { exportCsvData, printElement } from '../../api';
 import usePagination from '../../hooks/usePagination';
 import Pagination from '../../components/Pagination';
 import './orders.css';
@@ -61,9 +61,9 @@ export default function AdminUsersPage() {
   const [creating, setCreating]       = useState(false);
   const [createError, setCreateError] = useState('');
 
-  // Edit role modal
+  // Edit user modal
   const [editModal, setEditModal]   = useState(null);
-  const [roleForm, setRoleForm]     = useState('');
+  const [editForm, setEditForm]     = useState({});
   const [saving, setSaving]         = useState(false);
   const [editError, setEditError]   = useState('');
 
@@ -95,18 +95,22 @@ export default function AdminUsersPage() {
     setCreating(false);
   };
 
-  /* ── Edit role ── */
-  const openEdit = (u) => { setRoleForm(u.role); setEditError(''); setEditModal(u); };
-  const handleSaveRole = async (e) => {
+  /* ── Edit user ── */
+  const openEdit = (u) => {
+    setEditForm({ name: u.name, email: u.email, phone: u.phone || '', company_name: u.company_name || '', role: u.role });
+    setEditError('');
+    setEditModal(u);
+  };
+  const handleSaveEdit = async (e) => {
     e.preventDefault();
     setSaving(true); setEditError('');
     try {
-      await api.patch(`/admin/users/${editModal.id}`, { role: roleForm });
-      setUsers(prev => prev.map(u => u.id === editModal.id ? { ...u, role: roleForm } : u));
-      if (drawer?.id === editModal.id) setDrawer(prev => ({ ...prev, role: roleForm }));
+      const { data } = await api.patch(`/admin/users/${editModal.id}`, editForm);
+      setUsers(prev => prev.map(u => u.id === editModal.id ? { ...u, ...data } : u));
+      if (drawer?.id === editModal.id) setDrawer(prev => ({ ...prev, ...data }));
       setEditModal(null);
     } catch (err) {
-      setEditError(err.response?.data?.message || 'Failed to update role.');
+      setEditError(err.response?.data?.message || 'Failed to update user.');
     }
     setSaving(false);
   };
@@ -220,9 +224,23 @@ export default function AdminUsersPage() {
               placeholder="Search name, email, company…"
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <a href="http://localhost:5000/api/admin/export/clients" target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
-            <FontAwesomeIcon icon={faDownload} /> Export CSV
-          </a>
+          <button className="btn btn-outline btn-sm" onClick={() =>
+              exportCsvData(filtered.map(u => ({
+                  name: u.name,
+                  email: u.email,
+                  phone: u.phone || '',
+                  company: u.company_name || '',
+                  role: u.role,
+                  status: u.is_active ? 'Active' : 'Inactive',
+                  orders: u.order_count || 0,
+                  total_paid_rwf: u.total_paid ? Number(u.total_paid).toLocaleString() : '0',
+                  joined: fmtDate(u.created_at),
+                })), 'users.xls')}>
+            <FontAwesomeIcon icon={faDownload} /> Export Excel
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={() => printElement('users-table-print', 'Users')}>
+            <FontAwesomeIcon icon={faPrint} /> PDF
+          </button>
           <button className="btn btn-primary btn-sm" onClick={() => { setForm(emptyForm); setCreateError(''); setCreateModal(true); }}>
             <FontAwesomeIcon icon={faPlus} /> Add User
           </button>
@@ -230,7 +248,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Table */}
-      <div className="dash-table-wrap">
+      <div className="dash-table-wrap" id="users-table-print">
         {loading ? (
           <div className="dash-empty"><span className="spinner" style={{ margin: '0 auto' }} /></div>
         ) : filtered.length === 0 ? (
@@ -290,7 +308,7 @@ export default function AdminUsersPage() {
                       </button>
                       {u.id !== me?.id && (
                         <>
-                          <button className="btn btn-outline btn-sm" onClick={() => openEdit(u)} title="Edit role">
+                          <button className="btn btn-outline btn-sm" onClick={() => openEdit(u)} title="Edit user">
                             <FontAwesomeIcon icon={faEdit} />
                           </button>
                           <button
@@ -372,39 +390,62 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* ── Edit Role Modal ── */}
+      {/* ── Edit User Modal ── */}
       {editModal && (
         <div className="modal-overlay" onClick={() => setEditModal(null)}>
-          <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+          <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
             <div className="modal__header">
               <div>
-                <h3>Change Role</h3>
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{editModal.name} · {editModal.email}</span>
+                <h3>Edit User</h3>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{editModal.email}</span>
               </div>
               <button className="modal__close" onClick={() => setEditModal(null)}><FontAwesomeIcon icon={faXmark} /></button>
             </div>
-            <form className="modal__body" onSubmit={handleSaveRole}>
+            <form className="modal__body" onSubmit={handleSaveEdit}>
               {editError && <div className="auth-form__alert auth-form__alert--error">{editError}</div>}
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label>Full Name *</label>
+                  <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label>Email *</label>
+                  <input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} required />
+                </div>
+              </div>
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label>Phone</label>
+                  <input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} placeholder="+250 780 000 000" />
+                </div>
+                <div className="form-group">
+                  <label>Company</label>
+                  <input value={editForm.company_name} onChange={e => setEditForm({ ...editForm, company_name: e.target.value })} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Role *</label>
+              </div>
               <div className="role-picker-grid">
                 {ROLES.map(r => (
                   <div key={r}
-                    className={`role-picker-card${roleForm === r ? ' selected' : ''}`}
-                    style={roleForm === r ? { background: ROLE_META[r].bg, borderColor: ROLE_META[r].color } : {}}
-                    onClick={() => setRoleForm(r)}
+                    className={`role-picker-card${editForm.role === r ? ' selected' : ''}`}
+                    style={editForm.role === r ? { background: ROLE_META[r].bg, borderColor: ROLE_META[r].color } : {}}
+                    onClick={() => setEditForm({ ...editForm, role: r })}
                   >
-                    <div className="role-picker-card__name" style={{ color: roleForm === r ? ROLE_META[r].color : undefined }}>
+                    <div className="role-picker-card__name" style={{ color: editForm.role === r ? ROLE_META[r].color : undefined }}>
                       {r === 'admin' && <FontAwesomeIcon icon={faShield} style={{ marginRight: 5 }} />}
                       {r.charAt(0).toUpperCase() + r.slice(1)}
                     </div>
                     <div className="role-picker-card__desc">{ROLE_META[r].desc}</div>
-                    {roleForm === r && <FontAwesomeIcon icon={faCheck} className="role-picker-card__check" style={{ color: ROLE_META[r].color }} />}
+                    {editForm.role === r && <FontAwesomeIcon icon={faCheck} className="role-picker-card__check" style={{ color: ROLE_META[r].color }} />}
                   </div>
                 ))}
               </div>
               <div className="modal__footer">
                 <button type="button" className="btn btn-outline" onClick={() => setEditModal(null)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Saving…' : <><FontAwesomeIcon icon={faCheck} /> Save Role</>}
+                  {saving ? 'Saving…' : <><FontAwesomeIcon icon={faCheck} /> Save Changes</>}
                 </button>
               </div>
             </form>
@@ -434,7 +475,7 @@ export default function AdminUsersPage() {
 
             <div className="drawer__body">
               {/* Info grid */}
-              <div className="detail-grid">
+              <div className="detail-grid" id="user-detail-print">
                 <div className="detail-item"><span>Email</span><strong style={{ fontSize: 13 }}>{drawer.email}</strong></div>
                 <div className="detail-item"><span>Phone</span><strong>{drawer.phone || '—'}</strong></div>
                 <div className="detail-item"><span>Company</span><strong>{drawer.company_name || '—'}</strong></div>
@@ -454,7 +495,25 @@ export default function AdminUsersPage() {
               {drawer.id !== me?.id && (
                 <div className="drawer__actions">
                   <button className="btn btn-outline" onClick={() => { openEdit(drawer); }}>
-                    <FontAwesomeIcon icon={faEdit} /> Change Role
+                    <FontAwesomeIcon icon={faEdit} /> Edit User
+                  </button>
+                  <button className="btn btn-outline" onClick={() =>
+                    exportCsvData([{
+                      name: drawer.name,
+                      email: drawer.email,
+                      phone: drawer.phone || '',
+                      company: drawer.company_name || '',
+                      role: drawer.role,
+                      status: drawer.is_active ? 'Active' : 'Inactive',
+                      orders: drawer.order_count || 0,
+                      total_paid_rwf: drawer.total_paid ? Number(drawer.total_paid).toLocaleString() : '0',
+                      joined: fmtDate(drawer.created_at),
+                    }], `user-${drawer.name.replace(/\s+/g,'-')}.xls`)
+                  }>
+                    <FontAwesomeIcon icon={faDownload} /> Excel
+                  </button>
+                  <button className="btn btn-outline" onClick={() => printElement('user-detail-print', `User ${drawer.name}`)}>
+                    <FontAwesomeIcon icon={faPrint} /> PDF
                   </button>
                   <button
                     className={`btn ${drawer.is_active ? 'btn-danger' : 'btn-success'}`}

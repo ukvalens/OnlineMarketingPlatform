@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faFileLines, faXmark, faPrint, faSearch, faDownload,
-  faPlus, faCheck, faEye, faPen
+  faPlus, faCheck, faEye, faPen, faTrash
 } from '@fortawesome/free-solid-svg-icons';
+import ReceiptCard from '../../components/ReceiptCard';
 import DashboardLayout from './DashboardLayout';
-import api, { exportCsv } from '../../api';
+import api, { exportCsvData, printElement } from '../../api';
 import usePagination from '../../hooks/usePagination';
 import Pagination from '../../components/Pagination';
 import './orders.css';
@@ -91,6 +92,14 @@ export default function AdminInvoicesPage() {
     setReceiptLoading(false);
   };
 
+  const handleDelete = async (inv) => {
+    if (!window.confirm(`Permanently delete invoice for ${inv.reference}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/admin/invoices/${inv.id}`);
+      setInvoices(prev => prev.filter(x => x.id !== inv.id));
+    } catch (err) { alert(err.response?.data?.message || 'Failed to delete.'); }
+  };
+
   const filtered = invoices.filter(inv => {
     const matchStatus = filter === 'all' || inv.status === filter;
     const q = search.toLowerCase();
@@ -148,8 +157,18 @@ export default function AdminInvoicesPage() {
               placeholder="Search order ref, client…"
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <button className="btn btn-outline btn-sm" onClick={() => exportCsv('payments', 'payments.csv')}>
-            <FontAwesomeIcon icon={faDownload} /> Export CSV
+          <button className="btn btn-outline btn-sm" onClick={() => exportCsvData(invoices.map(i => ({
+                reference: i.reference,
+                client: i.client_name,
+                amount_rwf: Number(i.amount).toLocaleString(),
+                status: i.status,
+                due_date: i.due_date ? fmtDate(i.due_date) : '',
+                issued: fmtDate(i.created_at),
+              })), 'invoices.xls')}>
+            <FontAwesomeIcon icon={faDownload} /> Export Excel
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={() => printElement('invoices-table-print', 'Invoices')}>
+            <FontAwesomeIcon icon={faPrint} /> PDF
           </button>
           <button className="btn btn-primary btn-sm" onClick={openCreate}>
             <FontAwesomeIcon icon={faPlus} /> New Invoice
@@ -158,7 +177,7 @@ export default function AdminInvoicesPage() {
       </div>
 
       {/* Table */}
-      <div className="dash-table-wrap">
+      <div className="dash-table-wrap" id="invoices-table-print">
         {loading ? (
           <div className="dash-empty"><span className="spinner" style={{ margin: '0 auto' }} /></div>
         ) : filtered.length === 0 ? (
@@ -201,6 +220,9 @@ export default function AdminInvoicesPage() {
                       </button>
                       <button className="btn btn-outline btn-sm" onClick={() => openEdit(inv)} title="Update status">
                         <FontAwesomeIcon icon={faPen} />
+                      </button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(inv)} title="Delete">
+                        <FontAwesomeIcon icon={faTrash} />
                       </button>
                     </div>
                   </td>
@@ -285,6 +307,8 @@ export default function AdminInvoicesPage() {
         </div>
       )}
 
+
+
       {/* ── Receipt Drawer ── */}
       {receipt && (
         <div className="drawer-overlay" onClick={() => setReceipt(null)}>
@@ -294,60 +318,20 @@ export default function AdminInvoicesPage() {
                 <h3>Invoice Receipt</h3>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{receipt.reference}</span>
               </div>
-              <button className="modal__close" onClick={() => setReceipt(null)}><FontAwesomeIcon icon={faXmark} /></button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {!receiptLoading && receipt.id && (
+                  <button className="btn btn-outline btn-sm" onClick={() => printElement('receipt-printable', `Receipt ${receipt.reference}`)}>
+                    <FontAwesomeIcon icon={faPrint} /> PDF
+                  </button>
+                )}
+                <button className="modal__close" onClick={() => setReceipt(null)}><FontAwesomeIcon icon={faXmark} /></button>
+              </div>
             </div>
             {receiptLoading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><span className="spinner" /></div>
             ) : (
               <div className="drawer__body">
-                <div className="receipt-card">
-                  <div className="receipt-header">
-                    <div className="receipt-logo">DM<span>RW</span></div>
-                    <div>
-                      <div className="receipt-title">Payment Receipt</div>
-                      <div className="receipt-sub">DigitalMarkRW</div>
-                    </div>
-                  </div>
-                  <div className="receipt-divider" />
-                  <div className="detail-grid">
-                    <div className="detail-item"><span>Client</span><strong>{receipt.client_name}</strong></div>
-                    <div className="detail-item"><span>Email</span><strong style={{ fontSize: 12 }}>{receipt.email}</strong></div>
-                    <div className="detail-item"><span>Order Ref</span><strong>{receipt.reference}</strong></div>
-                    <div className="detail-item"><span>Status</span>
-                      <strong><span className={`status-badge status-badge--${STATUS_COLORS[receipt.status]}`}>{receipt.status}</span></strong>
-                    </div>
-                    <div className="detail-item"><span>Amount</span><strong>RWF {fmt(receipt.amount)}</strong></div>
-                    <div className="detail-item"><span>Due Date</span><strong>{receipt.due_date ? fmtDate(receipt.due_date) : '—'}</strong></div>
-                  </div>
-                  <div className="receipt-divider" />
-                  <strong style={{ fontSize: 13 }}>Payment Transactions</strong>
-                  {receipt.payments?.filter(p => p.paid_at).length === 0 ? (
-                    <p className="detail-empty" style={{ marginTop: 8 }}>No completed payments recorded.</p>
-                  ) : (
-                    <ul className="receipt-payments">
-                      {receipt.payments?.filter(p => p.paid_at).map((p, i) => (
-                        <li key={i} className="receipt-payment-item">
-                          <div>
-                            <strong style={{ textTransform: 'capitalize' }}>{p.method?.replace('_', ' ')}</strong>
-                            <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block' }}>Ref: {p.ref}</span>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <strong>RWF {fmt(p.amount)}</strong>
-                            <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block' }}>{fmtDate(p.paid_at)}</span>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="receipt-divider" />
-                  <div className="receipt-total">
-                    <span>Total Paid</span>
-                    <strong>RWF {fmt(receipt.amount)}</strong>
-                  </div>
-                </div>
-                <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }} onClick={() => window.print()}>
-                  <FontAwesomeIcon icon={faPrint} /> Print Receipt
-                </button>
+                <ReceiptCard receipt={receipt} />
               </div>
             )}
           </div>

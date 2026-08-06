@@ -1,3 +1,13 @@
+/**
+ * backend/routes/admin/index.js
+ *
+ * Changes:
+ * - DELETE /admin/users/:id: hard-deletes a user (admin only), blocks self-deletion,
+ *   logs to audit_logs.
+ * - DELETE /admin/orders/:id: new — hard-deletes an order with audit log.
+ * - DELETE /admin/invoices/:id: new — hard-deletes an invoice with audit log.
+ * - DELETE /admin/payments/:id: new — hard-deletes a payment record with audit log.
+ */
 const router = require('express').Router();
 const pool = require('../../config/db');
 const authenticate = require('../../middleware/authenticate');
@@ -61,40 +71,84 @@ router.get('/users/:id/audit', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// PATCH /api/admin/users/:id — update role or active status
+// PATCH /api/admin/users/:id — update profile fields, role, or active status
 router.patch('/users/:id', async (req, res, next) => {
   try {
-    const { role, is_active } = req.body;
+    const { role, is_active, name, email, phone, company_name } = req.body;
     const { rows } = await pool.query(
-      `UPDATE users SET role=COALESCE($1,role), is_active=COALESCE($2,is_active), updated_at=NOW()
-       WHERE id=$3 RETURNING id, name, email, role, is_active`,
-      [role, is_active, req.params.id]
+      `UPDATE users
+       SET role         = COALESCE($1, role),
+           is_active    = COALESCE($2, is_active),
+           name         = COALESCE($3, name),
+           email        = COALESCE($4, email),
+           phone        = COALESCE($5, phone),
+           company_name = COALESCE($6, company_name),
+           updated_at   = NOW()
+       WHERE id=$7
+       RETURNING id, name, email, phone, company_name, role, is_active`,
+      [role ?? null, is_active ?? null, name ?? null, email ?? null, phone ?? null, company_name ?? null, req.params.id]
     );
     if (!rows.length) return res.status(404).json({ message: 'User not found' });
-
-    // Audit log
     await pool.query(
       'INSERT INTO audit_logs (user_id, action, entity, entity_id, meta) VALUES ($1,$2,$3,$4,$5)',
-      [req.user.id, 'UPDATE_USER', 'users', req.params.id, JSON.stringify({ role, is_active })]
+      [req.user.id, 'UPDATE_USER', 'users', req.params.id, JSON.stringify({ role, is_active, name, email })]
     );
     res.json(rows[0]);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
 
-// DELETE /api/admin/users/:id
-router.delete('/users/:id', async (req, res, next) => {
+// DELETE /api/admin/users/:id — hard delete (admin only)
+router.delete('/users/:id', authorize('admin'), async (req, res, next) => {
   try {
-    await pool.query('UPDATE users SET is_active=FALSE WHERE id=$1', [req.params.id]);
+    if (req.params.id === req.user.id)
+      return res.status(400).json({ message: 'You cannot delete your own account.' });
+
+    const { rows } = await pool.query('SELECT name, email FROM users WHERE id=$1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ message: 'User not found' });
+
+    await pool.query('DELETE FROM users WHERE id=$1', [req.params.id]);
     await pool.query(
-      'INSERT INTO audit_logs (user_id, action, entity, entity_id) VALUES ($1,$2,$3,$4)',
-      [req.user.id, 'DEACTIVATE_USER', 'users', req.params.id]
+      'INSERT INTO audit_logs (user_id, action, entity, entity_id, meta) VALUES ($1,$2,$3,$4,$5)',
+      [req.user.id, 'DELETE_USER', 'users', req.params.id, JSON.stringify({ name: rows[0].name, email: rows[0].email })]
     );
-    res.json({ message: 'User deactivated' });
-  } catch (err) {
-    next(err);
-  }
+    res.json({ message: 'User deleted.' });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/admin/orders/:id
+router.delete('/orders/:id', authorize('admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT reference FROM orders WHERE id=$1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ message: 'Order not found' });
+    await pool.query('DELETE FROM orders WHERE id=$1', [req.params.id]);
+    await pool.query('INSERT INTO audit_logs (user_id, action, entity, entity_id, meta) VALUES ($1,$2,$3,$4,$5)',
+      [req.user.id, 'DELETE_ORDER', 'orders', req.params.id, JSON.stringify({ reference: rows[0].reference })]);
+    res.json({ message: 'Order deleted.' });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/admin/invoices/:id
+router.delete('/invoices/:id', authorize('admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT id FROM invoices WHERE id=$1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ message: 'Invoice not found' });
+    await pool.query('DELETE FROM invoices WHERE id=$1', [req.params.id]);
+    await pool.query('INSERT INTO audit_logs (user_id, action, entity, entity_id) VALUES ($1,$2,$3,$4)',
+      [req.user.id, 'DELETE_INVOICE', 'invoices', req.params.id]);
+    res.json({ message: 'Invoice deleted.' });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/admin/payments/:id
+router.delete('/payments/:id', authorize('admin'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT id FROM payments WHERE id=$1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ message: 'Payment not found' });
+    await pool.query('DELETE FROM payments WHERE id=$1', [req.params.id]);
+    await pool.query('INSERT INTO audit_logs (user_id, action, entity, entity_id) VALUES ($1,$2,$3,$4)',
+      [req.user.id, 'DELETE_PAYMENT', 'payments', req.params.id]);
+    res.json({ message: 'Payment deleted.' });
+  } catch (err) { next(err); }
 });
 
 // GET /api/admin/analytics

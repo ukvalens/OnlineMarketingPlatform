@@ -3,12 +3,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboard, faEye, faXmark, faCheck, faBan, faUpload,
   faPlus, faChevronDown, faChevronUp, faDownload, faSearch,
-  faPaperPlane, faSliders, faMessage
+  faPaperPlane, faSliders, faMessage, faTrash, faPrint
 } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
 import DashboardLayout from './DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
-import api, { exportCsv, getImageUrl } from '../../api';
+import api, { exportCsvData, printElement, getImageUrl } from '../../api';
 import usePagination from '../../hooks/usePagination';
 import Pagination from '../../components/Pagination';
 import './orders.css';
@@ -196,6 +196,16 @@ export default function AdminOrdersPage() {
     setActionBusy(false);
   };
 
+  /* ── delete order ── */
+  const handleDelete = async (o) => {
+    if (!window.confirm(`Permanently delete order ${o.reference}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/admin/orders/${o.id}`);
+      setOrders(prev => prev.filter(x => x.id !== o.id));
+      if (drawer?.id === o.id) closeDrawer();
+    } catch (err) { alert(err.response?.data?.message || 'Failed to delete.'); }
+  };
+
   /* ── filtered list ── */
   const filtered = orders.filter(o => {
     const matchStatus = filter === 'all' || o.status === filter;
@@ -248,14 +258,26 @@ export default function AdminOrdersPage() {
               placeholder="Search ref, client, service…"
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <button className="btn btn-outline btn-sm" onClick={() => exportCsv('orders', 'orders.csv')}>
-            <FontAwesomeIcon icon={faDownload} /> Export CSV
+          <button className="btn btn-outline btn-sm" onClick={() => exportCsvData(filtered.map(o => ({
+                reference: o.reference,
+                client: o.client_name || '',
+                service: o.service_name || '',
+                package: o.tier || '',
+                status: o.status.replace('_', ' '),
+                quote_rwf: o.quote_amount ? Number(o.quote_amount).toLocaleString() : '',
+                progress: `${o.progress_percent || 0}%`,
+                placed: fmtDate(o.created_at),
+              })), 'orders.xls')}>
+            <FontAwesomeIcon icon={faDownload} /> Export Excel
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={() => printElement('orders-table-print', 'Orders')}>
+            <FontAwesomeIcon icon={faPrint} /> PDF
           </button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="dash-table-wrap">
+      <div className="dash-table-wrap" id="orders-table-print">
         {loading ? (
           <div className="dash-empty"><span className="spinner" style={{ margin: '0 auto' }} /></div>
         ) : filtered.length === 0 ? (
@@ -295,9 +317,14 @@ export default function AdminOrdersPage() {
                   <td><span className={`status-badge status-badge--${o.status}`}>{o.status.replace('_', ' ')}</span></td>
                   <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>{fmtDate(o.created_at)}</td>
                   <td>
-                    <button className="btn btn-outline btn-sm" onClick={() => openDrawer(o)}>
-                      <FontAwesomeIcon icon={faEye} /> Manage
-                    </button>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-outline btn-sm" onClick={() => openDrawer(o)}>
+                        <FontAwesomeIcon icon={faEye} /> Manage
+                      </button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(o)} title="Delete">
+                        <FontAwesomeIcon icon={faTrash} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -316,7 +343,33 @@ export default function AdminOrdersPage() {
                 <h3>{drawer.reference}</h3>
                 {detail && <span className={`status-badge status-badge--${detail.status}`}>{detail.status.replace('_', ' ')}</span>}
               </div>
-              <button className="modal__close" onClick={closeDrawer}><FontAwesomeIcon icon={faXmark} /></button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {detail && (
+                  <>
+                    <button className="btn btn-outline btn-sm" onClick={() =>
+                      exportCsvData([{
+                        reference: detail.reference,
+                        client: detail.client_name || '',
+                        service: detail.service_name || '',
+                        package: detail.tier || '',
+                        status: detail.status.replace('_', ' '),
+                        quote_rwf: detail.quote_amount ? Number(detail.quote_amount).toLocaleString() : '',
+                        timeline: detail.proposed_timeline || '',
+                        progress: `${detail.progress_percent}%`,
+                        assigned_staff: detail.assigned_staff_name || '',
+                        placed: fmtDate(detail.created_at),
+                        notes: detail.notes || '',
+                      }], `order-${detail.reference}.xls`)
+                    }>
+                      <FontAwesomeIcon icon={faDownload} /> Excel
+                    </button>
+                    <button className="btn btn-outline btn-sm" onClick={() => printElement('order-detail-print', `Order ${detail.reference}`)}>
+                      <FontAwesomeIcon icon={faPrint} /> PDF
+                    </button>
+                  </>
+                )}
+                <button className="modal__close" onClick={closeDrawer}><FontAwesomeIcon icon={faXmark} /></button>
+              </div>
             </div>
 
             {drawerLoading ? (
@@ -326,7 +379,7 @@ export default function AdminOrdersPage() {
                 {drawerError && <div className="auth-form__alert auth-form__alert--error">{drawerError}</div>}
 
                 {/* Info grid */}
-                <div className="detail-grid">
+                <div className="detail-grid" id="order-detail-print">
                   <div className="detail-item"><span>Client</span><strong>{detail.client_name}</strong></div>
                   <div className="detail-item"><span>Service</span><strong>{detail.service_name}</strong></div>
                   <div className="detail-item"><span>Package</span><strong style={{ textTransform: 'capitalize' }}>{detail.tier || '—'}</strong></div>

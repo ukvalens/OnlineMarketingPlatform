@@ -1,3 +1,11 @@
+/**
+ * frontend/src/components/layout/Navbar.js
+ *
+ * Changes:
+ * - Nav links, login/register buttons, and the burger menu are only rendered
+ *   when no user is logged in (!user). Logged-in users see only the user
+ *   dropdown (dashboard, profile, logout).
+ */
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -53,7 +61,7 @@ export default function Navbar() {
         </Link>
 
         <ul className={`navbar__links${open ? ' navbar__links--open' : ''}`}>
-          {NAV_LINKS.map(({ labelKey, to }) => (
+          {!user && NAV_LINKS.map(({ labelKey, to }) => (
             <li key={to}>
               <NavLink
                 to={to}
@@ -107,11 +115,13 @@ export default function Navbar() {
           )}
         </div>
 
-        <button className="navbar__burger" onClick={() => setOpen(!open)} aria-label="Toggle menu">
-          {open
-            ? <FontAwesomeIcon icon={faXmark} style={{ fontSize: 22 }} />
-            : <FontAwesomeIcon icon={faBars} style={{ fontSize: 22 }} />}
-        </button>
+        {!user && (
+          <button className="navbar__burger" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+            {open
+              ? <FontAwesomeIcon icon={faXmark} style={{ fontSize: 22 }} />
+              : <FontAwesomeIcon icon={faBars} style={{ fontSize: 22 }} />}
+          </button>
+        )}
       </div>
     </nav>
   );

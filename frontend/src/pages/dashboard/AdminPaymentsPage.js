@@ -2,10 +2,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCreditCard, faXmark, faSearch, faDownload,
-  faCheck, faEye, faMobileAlt, faMoneyBill
+  faCheck, faEye, faMobileAlt, faMoneyBill, faTrash, faPrint
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
-import api, { exportCsv } from '../../api';
+import api, { exportCsvData, printElement } from '../../api';
 import usePagination from '../../hooks/usePagination';
 import Pagination from '../../components/Pagination';
 import './orders.css';
@@ -63,6 +63,15 @@ export default function AdminPaymentsPage() {
       setRecordErr(err.response?.data?.message || 'Failed to record payment.');
     }
     setRecording(false);
+  };
+
+  const handleDelete = async (p) => {
+    if (!window.confirm(`Permanently delete this payment record? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/admin/payments/${p.id}`);
+      setPayments(prev => prev.filter(x => x.id !== p.id));
+      if (drawer?.id === p.id) setDrawer(null);
+    } catch (err) { alert(err.response?.data?.message || 'Failed to delete.'); }
   };
 
   const filtered = payments.filter(p => {
@@ -147,8 +156,19 @@ export default function AdminPaymentsPage() {
               placeholder="Search ref, order, client…"
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <button className="btn btn-outline btn-sm" onClick={() => exportCsv('payments', 'payments.csv')}>
-            <FontAwesomeIcon icon={faDownload} /> Export CSV
+          <button className="btn btn-outline btn-sm" onClick={() => exportCsvData(filtered.map(p => ({
+                transaction_ref: p.transaction_ref || '',
+                order_ref: p.reference || '',
+                client: p.client_name || '',
+                method: p.method?.replace('_', ' ') || '',
+                amount_rwf: Number(p.amount).toLocaleString(),
+                status: p.status,
+                date: p.paid_at ? fmtTime(p.paid_at) : fmtTime(p.created_at),
+              })), 'payments.xls')}>
+            <FontAwesomeIcon icon={faDownload} /> Export Excel
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={() => printElement('payments-table-print', 'Payments')}>
+            <FontAwesomeIcon icon={faPrint} /> PDF
           </button>
           <button className="btn btn-primary btn-sm" onClick={openRecord}>
             <FontAwesomeIcon icon={faMoneyBill} /> Record Payment
@@ -157,7 +177,7 @@ export default function AdminPaymentsPage() {
       </div>
 
       {/* Table */}
-      <div className="dash-table-wrap">
+      <div className="dash-table-wrap" id="payments-table-print">
         {loading ? (
           <div className="dash-empty"><span className="spinner" style={{ margin: '0 auto' }} /></div>
         ) : filtered.length === 0 ? (
@@ -202,9 +222,14 @@ export default function AdminPaymentsPage() {
                     {p.paid_at ? fmtDate(p.paid_at) : fmtDate(p.created_at)}
                   </td>
                   <td>
-                    <button className="btn btn-outline btn-sm" onClick={() => setDrawer(p)} title="View details">
-                      <FontAwesomeIcon icon={faEye} />
-                    </button>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-outline btn-sm" onClick={() => setDrawer(p)} title="View details">
+                        <FontAwesomeIcon icon={faEye} />
+                      </button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p)} title="Delete">
+                        <FontAwesomeIcon icon={faTrash} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -274,10 +299,28 @@ export default function AdminPaymentsPage() {
                 <h3>Payment Detail</h3>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{drawer.reference}</span>
               </div>
-              <button className="modal__close" onClick={() => setDrawer(null)}><FontAwesomeIcon icon={faXmark} /></button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button className="btn btn-outline btn-sm" onClick={() =>
+                  exportCsvData([{
+                    transaction_ref: drawer.transaction_ref || '',
+                    order_ref: drawer.reference || '',
+                    client: drawer.client_name || '',
+                    method: drawer.method?.replace('_', ' ') || '',
+                    amount_rwf: Number(drawer.amount).toLocaleString(),
+                    status: drawer.status,
+                    date: drawer.paid_at ? fmtTime(drawer.paid_at) : '',
+                  }], `payment-${drawer.reference}.xls`)
+                }>
+                  <FontAwesomeIcon icon={faDownload} /> Excel
+                </button>
+                <button className="btn btn-outline btn-sm" onClick={() => printElement('payment-detail-print', `Payment ${drawer.reference}`)}>
+                  <FontAwesomeIcon icon={faPrint} /> PDF
+                </button>
+                <button className="modal__close" onClick={() => setDrawer(null)}><FontAwesomeIcon icon={faXmark} /></button>
+              </div>
             </div>
             <div className="drawer__body">
-              <div className="detail-grid">
+              <div className="detail-grid" id="payment-detail-print">
                 <div className="detail-item"><span>Client</span><strong>{drawer.client_name || '—'}</strong></div>
                 <div className="detail-item"><span>Order Ref</span><strong>{drawer.reference || '—'}</strong></div>
                 <div className="detail-item"><span>Method</span>

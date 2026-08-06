@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch, faDownload, faEye, faXmark,
   faUserCheck, faUserXmark, faBuilding,
-  faEnvelope, faPhone, faCalendar, faBoxOpen
+  faEnvelope, faPhone, faCalendar, faBoxOpen, faTrash
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import api, { exportCsv } from '../../api';
@@ -46,6 +46,15 @@ export default function AdminClientsPage() {
     const { data } = await api.get(`/admin/clients/${client.id}/orders`).catch(() => ({ data: [] }));
     setOrders(data);
     setDrawerLoading(false);
+  };
+
+  const handleDelete = async (c) => {
+    if (!window.confirm(`Permanently delete client ${c.name}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/admin/users/${c.id}`);
+      setClients(prev => prev.filter(x => x.id !== c.id));
+      if (drawer?.id === c.id) setDrawer(null);
+    } catch (err) { alert(err.response?.data?.message || 'Failed to delete.'); }
   };
 
   const toggleActive = async (client) => {
@@ -183,6 +192,9 @@ export default function AdminClientsPage() {
                       >
                         <FontAwesomeIcon icon={c.is_active ? faUserXmark : faUserCheck} />
                       </button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c)} title="Delete permanently">
+                        <FontAwesomeIcon icon={faTrash} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -269,6 +281,9 @@ export default function AdminClientsPage() {
                 >
                   <FontAwesomeIcon icon={drawer.is_active ? faUserXmark : faUserCheck} />
                   {drawer.is_active ? ' Deactivate' : ' Reactivate'}
+                </button>
+                <button className="btn btn-danger" onClick={() => handleDelete(drawer)}>
+                  <FontAwesomeIcon icon={faTrash} /> Delete Permanently
                 </button>
               </div>
 

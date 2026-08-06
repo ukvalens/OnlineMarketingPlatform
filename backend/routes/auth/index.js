@@ -1,3 +1,17 @@
+/**
+ * backend/routes/auth/index.js
+ *
+ * Changes:
+ * - POST /auth/register: now creates unverified user and emails a 6-digit OTP
+ *   instead of a verification link.
+ * - POST /auth/verify-otp: new — validates registration OTP, marks email_verified=TRUE,
+ *   returns JWT.
+ * - POST /auth/resend-otp: new — regenerates and resends registration OTP.
+ * - POST /auth/login: after correct password, sends a login OTP to the user's email
+ *   for ALL roles (not just clients). Returns { requiresOtp: true, email } instead
+ *   of a JWT directly.
+ * - POST /auth/login-otp: new — validates login OTP and returns JWT.
+ */
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -30,18 +44,79 @@ router.post(
       if (exists.rows.length) return res.status(409).json({ message: 'Email already registered' });
 
       const password_hash = await bcrypt.hash(password, 12);
-      const { rows } = await pool.query(
-        `INSERT INTO users (name, email, phone, password_hash, company_name, industry)
-         VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, name, email, role`,
-        [name, email, phone, password_hash, company_name, industry]
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+
+      await pool.query(
+        `INSERT INTO users (name, email, phone, password_hash, company_name, industry, email_verified, email_verify_token, email_verify_expires)
+         VALUES ($1,$2,$3,$4,$5,$6, FALSE, $7, $8)`,
+        [name, email, phone, password_hash, company_name, industry, otp, otpExpires]
       );
-      const user = rows[0];
-      res.status(201).json({ token: signToken(user), user });
+
+      await sendEmail({
+        to: email,
+        subject: 'Your verification code – DigitalMarkRW',
+        html: `<p>Hi ${name},</p>
+               <p>Your email verification code is:</p>
+               <h2 style="letter-spacing:8px;font-size:36px;color:#2563eb;">${otp}</h2>
+               <p>Enter this code on the verification page. It expires in <strong>15 minutes</strong>.</p>
+               <p>If you did not register, ignore this email.</p>`,
+      });
+
+      res.status(201).json({ message: 'Registration successful. Please check your email for your 6-digit OTP.' });
     } catch (err) {
       next(err);
     }
   }
 );
+
+// POST /api/auth/verify-otp
+router.post('/verify-otp', [body('email').isEmail().normalizeEmail(), body('otp').isLength({ min: 6, max: 6 })], validate, async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const { rows } = await pool.query(
+      'SELECT id, name, email, role FROM users WHERE email=$1 AND email_verify_token=$2 AND email_verified=FALSE AND email_verify_expires > NOW()',
+      [email, otp]
+    );
+    if (!rows.length) return res.status(400).json({ message: 'Invalid or expired OTP.' });
+
+    await pool.query(
+      'UPDATE users SET email_verified=TRUE, email_verify_token=NULL, email_verify_expires=NULL WHERE id=$1',
+      [rows[0].id]
+    );
+
+    const user = rows[0];
+    res.json({ token: signToken(user), user });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/auth/resend-otp
+router.post('/resend-otp', [body('email').isEmail().normalizeEmail()], validate, async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const { rows } = await pool.query('SELECT id, name FROM users WHERE email=$1 AND email_verified=FALSE', [email]);
+    if (!rows.length) return res.status(400).json({ message: 'Account not found or already verified.' });
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const otpExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await pool.query('UPDATE users SET email_verify_token=$1, email_verify_expires=$2 WHERE id=$3', [otp, otpExpires, rows[0].id]);
+
+    await sendEmail({
+      to: email,
+      subject: 'Your new verification code – DigitalMarkRW',
+      html: `<p>Hi ${rows[0].name},</p>
+             <p>Your new verification code is:</p>
+             <h2 style="letter-spacing:8px;font-size:36px;color:#2563eb;">${otp}</h2>
+             <p>It expires in <strong>15 minutes</strong>.</p>`,
+    });
+
+    res.json({ message: 'A new OTP has been sent to your email.' });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // POST /api/auth/login
 router.post(
@@ -52,7 +127,7 @@ router.post(
     try {
       const { email, password } = req.body;
       const { rows } = await pool.query(
-        'SELECT id, name, email, role, password_hash, is_active FROM users WHERE email=$1',
+        'SELECT id, name, email, role, password_hash, is_active, email_verified FROM users WHERE email=$1',
         [email]
       );
       const user = rows[0];
@@ -62,13 +137,48 @@ router.post(
       const valid = await bcrypt.compare(password, user.password_hash);
       if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
-      const { password_hash, ...safeUser } = user;
-      res.json({ token: signToken(user), user: safeUser });
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+      await pool.query(
+        'UPDATE users SET email_verify_token=$1, email_verify_expires=$2 WHERE id=$3',
+        [otp, otpExpires, user.id]
+      );
+      await sendEmail({
+        to: email,
+        subject: 'Your login code – DigitalMarkRW',
+        html: `<p>Hi ${user.name},</p>
+               <p>Your login verification code is:</p>
+               <h2 style="letter-spacing:8px;font-size:36px;color:#2563eb;">${otp}</h2>
+               <p>It expires in <strong>10 minutes</strong>. If you did not attempt to log in, secure your account immediately.</p>`,
+      });
+      return res.json({ requiresOtp: true, email });
     } catch (err) {
       next(err);
     }
   }
 );
+
+// POST /api/auth/login-otp
+router.post('/login-otp', [body('email').isEmail().normalizeEmail(), body('otp').isLength({ min: 6, max: 6 })], validate, async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const { rows } = await pool.query(
+      'SELECT id, name, email, role FROM users WHERE email=$1 AND email_verify_token=$2 AND email_verify_expires > NOW()',
+      [email, otp]
+    );
+    if (!rows.length) return res.status(400).json({ message: 'Invalid or expired OTP.' });
+
+    await pool.query(
+      'UPDATE users SET email_verify_token=NULL, email_verify_expires=NULL WHERE id=$1',
+      [rows[0].id]
+    );
+
+    const user = rows[0];
+    res.json({ token: signToken(user), user });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // POST /api/auth/forgot-password
 router.post('/forgot-password', [body('email').isEmail().normalizeEmail()], validate, async (req, res, next) => {
