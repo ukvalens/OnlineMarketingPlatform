@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faGear, faListCheck, faEnvelope, faClockRotateLeft,
-  faCheck, faEnvelopeOpen, faTrash, faDownload, faPrint
+  faCheck, faEnvelopeOpen, faDownload, faPrint
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import api, { exportCsvData, printElement } from '../../api';
@@ -17,36 +17,27 @@ const fmtDate = (d) => new Date(d).toLocaleString('en-RW', {
 });
 
 const ACTION_COLORS = {
-  LOGIN: '#0e7490',
-  REGISTER: '#15803d',
-  PASSWORD_RESET: '#b45309',
-  PASSWORD_CHANGED: '#b45309',
-  CREATE_USER: '#15803d',
-  UPDATE_USER: '#1d4ed8',
-  DELETE_USER: '#b91c1c',
-  PROFILE_UPDATED: '#1d4ed8',
-  AVATAR_UPDATED: '#1d4ed8',
-  ORDER_PLACED: '#7c3aed',
-  ORDER_CONFIRMED: '#15803d',
-  ORDER_CANCELLED: '#b91c1c',
-  ORDER_STATUS_UPDATED: '#7c3aed',
-  QUOTE_SUBMITTED: '#0e7490',
-  STAFF_ASSIGNED: '#1d4ed8',
-  MILESTONE_ADDED: '#0e7490',
-  MILESTONE_COMPLETED: '#15803d',
-  DELIVERABLE_UPLOADED: '#7c3aed',
-  INVOICE_CREATED: '#0e7490',
-  INVOICE_STATUS_UPDATED: '#1d4ed8',
-  DELETE_INVOICE: '#b91c1c',
-  RECORD_PAYMENT: '#15803d',
-  CONFIRM_PAYMENT: '#15803d',
-  DELETE_PAYMENT: '#b91c1c',
-  DELETE_ORDER: '#b91c1c',
-  MARK_CONTACT_READ: '#6b7280',
+  LOGIN: '#0e7490', REGISTER: '#15803d',
+  PASSWORD_RESET: '#b45309', PASSWORD_CHANGED: '#b45309',
+  CREATE_USER: '#15803d', UPDATE_USER: '#1d4ed8', DELETE_USER: '#b91c1c',
+  PROFILE_UPDATED: '#1d4ed8', AVATAR_UPDATED: '#1d4ed8',
+  ORDER_PLACED: '#7c3aed', ORDER_CONFIRMED: '#15803d', ORDER_CANCELLED: '#b91c1c',
+  ORDER_STATUS_UPDATED: '#7c3aed', QUOTE_SUBMITTED: '#0e7490',
+  STAFF_ASSIGNED: '#1d4ed8', MILESTONE_ADDED: '#0e7490', MILESTONE_COMPLETED: '#15803d',
+  DELIVERABLE_UPLOADED: '#7c3aed', INVOICE_CREATED: '#0e7490',
+  INVOICE_STATUS_UPDATED: '#1d4ed8', DELETE_INVOICE: '#b91c1c',
+  RECORD_PAYMENT: '#15803d', CONFIRM_PAYMENT: '#15803d', DELETE_PAYMENT: '#b91c1c',
+  DELETE_ORDER: '#b91c1c', MARK_CONTACT_READ: '#6b7280',
+};
+
+const parseMeta = (meta) => {
+  if (!meta) return {};
+  if (typeof meta === 'object') return meta;
+  try { return JSON.parse(meta); } catch { return {}; }
 };
 
 function formatAuditEntity(action, entity, entityId, meta) {
-  const m = typeof meta === 'string' ? (() => { try { return JSON.parse(meta); } catch { return {}; } })() : (meta || {});
+  const m = parseMeta(meta);
   const shortId = entityId ? String(entityId).slice(0, 8) : null;
   switch (action) {
     case 'LOGIN':
@@ -54,39 +45,39 @@ function formatAuditEntity(action, entity, entityId, meta) {
     case 'PASSWORD_RESET':
     case 'PASSWORD_CHANGED':
     case 'AVATAR_UPDATED':
-    case 'PROFILE_UPDATED':    return `User${shortId ? ` #${shortId}` : ''}`;
+    case 'PROFILE_UPDATED':      return `User${shortId ? ` #${shortId}` : ''}`;
     case 'CREATE_USER':
     case 'UPDATE_USER':
-    case 'DELETE_USER':        return m.name ? m.name : `User${shortId ? ` #${shortId}` : ''}`;
+    case 'DELETE_USER':          return m.name ? m.name : `User${shortId ? ` #${shortId}` : ''}`;
     case 'ORDER_PLACED':
     case 'ORDER_CONFIRMED':
     case 'ORDER_CANCELLED':
     case 'ORDER_STATUS_UPDATED':
     case 'QUOTE_SUBMITTED':
     case 'STAFF_ASSIGNED':
-    case 'DELETE_ORDER':       return m.reference ? `Order ${m.reference}` : `Order${shortId ? ` #${shortId}` : ''}`;
+    case 'DELETE_ORDER':         return m.reference ? `Order ${m.reference}` : `Order${shortId ? ` #${shortId}` : ''}`;
     case 'MILESTONE_ADDED':
-    case 'MILESTONE_COMPLETED':return m.title ? `Milestone "${m.title}"` : `Milestone${shortId ? ` #${shortId}` : ''}`;
-    case 'DELIVERABLE_UPLOADED':return m.file_name ? `File: ${m.file_name}` : `Deliverable${shortId ? ` #${shortId}` : ''}`;
+    case 'MILESTONE_COMPLETED':  return m.title ? `Milestone "${m.title}"` : `Milestone${shortId ? ` #${shortId}` : ''}`;
+    case 'DELIVERABLE_UPLOADED': return m.file_name ? `File: ${m.file_name}` : `Deliverable${shortId ? ` #${shortId}` : ''}`;
     case 'INVOICE_CREATED':
     case 'INVOICE_STATUS_UPDATED':
-    case 'DELETE_INVOICE':     return `Invoice${shortId ? ` #${shortId}` : ''}`;
+    case 'DELETE_INVOICE':       return `Invoice${shortId ? ` #${shortId}` : ''}`;
     case 'RECORD_PAYMENT':
     case 'CONFIRM_PAYMENT':
-    case 'DELETE_PAYMENT':     return `Payment${shortId ? ` #${shortId}` : ''}`;
-    case 'MARK_CONTACT_READ':  return `Contact${shortId ? ` #${shortId}` : ''}`;
-    default:                   return entity ? entity.replace(/_/g, ' ') : '—';
+    case 'DELETE_PAYMENT':       return `Payment${shortId ? ` #${shortId}` : ''}`;
+    case 'MARK_CONTACT_READ':    return `Contact${shortId ? ` #${shortId}` : ''}`;
+    default:                     return entity ? entity.replace(/_/g, ' ') : '—';
   }
 }
 
-  if (!meta && !action) return '—';
-  const m = typeof meta === 'string' ? (() => { try { return JSON.parse(meta); } catch { return {}; } })() : (meta || {});
+function formatAuditDetail(action, meta) {
+  const m = parseMeta(meta);
   switch (action) {
-    case 'LOGIN':               return `Role: ${m.role || '—'}`;
-    case 'REGISTER':            return `${m.name || ''} · ${m.email || ''}`;
-    case 'PASSWORD_RESET':      return 'Password reset via email link';
-    case 'PASSWORD_CHANGED':    return 'Password changed successfully';
-    case 'AVATAR_UPDATED':      return 'Profile photo updated';
+    case 'LOGIN':                return `Role: ${m.role || '—'}`;
+    case 'REGISTER':             return `${m.name || ''} · ${m.email || ''}`;
+    case 'PASSWORD_RESET':       return 'Password reset via email link';
+    case 'PASSWORD_CHANGED':     return 'Password changed successfully';
+    case 'AVATAR_UPDATED':       return 'Profile photo updated';
     case 'PROFILE_UPDATED': {
       const parts = [];
       if (m.name)         parts.push(`Name → ${m.name}`);
@@ -95,42 +86,45 @@ function formatAuditEntity(action, entity, entityId, meta) {
       if (m.company_name) parts.push(`Company → ${m.company_name}`);
       return parts.length ? parts.join(' · ') : 'Profile updated';
     }
-    case 'CREATE_USER':         return `${m.role ? `Role: ${m.role}` : 'New user created'}`;
+    case 'CREATE_USER':          return m.role ? `Role: ${m.role}` : 'New user created';
     case 'UPDATE_USER': {
       const parts = [];
-      if (m.role !== undefined && m.role !== null)      parts.push(`Role → ${m.role}`);
-      if (m.is_active !== undefined && m.is_active !== null) parts.push(m.is_active ? 'Activated' : 'Deactivated');
-      if (m.name)  parts.push(`Name → ${m.name}`);
-      if (m.email) parts.push(`Email → ${m.email}`);
+      if (m.role != null)      parts.push(`Role → ${m.role}`);
+      if (m.is_active != null) parts.push(m.is_active ? 'Activated' : 'Deactivated');
+      if (m.name)              parts.push(`Name → ${m.name}`);
+      if (m.email)             parts.push(`Email → ${m.email}`);
       return parts.length ? parts.join(' · ') : 'User updated';
     }
-    case 'DELETE_USER':         return `${m.name || ''} (${m.email || ''})`;
-    case 'ORDER_PLACED':        return `Ref: ${m.reference || '—'}`;
-    case 'ORDER_CONFIRMED':     return `Ref: ${m.reference || '—'}`;
-    case 'ORDER_CANCELLED':     return `Ref: ${m.reference || '—'}`;
-    case 'ORDER_STATUS_UPDATED':return `${m.from?.replace(/_/g,' ')} → ${m.to?.replace(/_/g,' ')}${m.progress_percent != null ? ` (${m.progress_percent}%)` : ''}`;
-    case 'QUOTE_SUBMITTED':     return `RWF ${Number(m.quote_amount || 0).toLocaleString()}${m.proposed_timeline ? ` · ${m.proposed_timeline}` : ''}`;
-    case 'STAFF_ASSIGNED':      return m.assigned_staff_id ? `Assigned to staff` : 'Unassigned';
-    case 'MILESTONE_ADDED':     return `"${m.title || '—'}"`;
-    case 'MILESTONE_COMPLETED': return `Milestone completed`;
-    case 'DELIVERABLE_UPLOADED':return `File: ${m.file_name || '—'}`;
-    case 'INVOICE_CREATED':     return `RWF ${Number(m.amount || 0).toLocaleString()}`;
+    case 'DELETE_USER':          return `${m.name || ''} (${m.email || ''})`;
+    case 'ORDER_PLACED':         return `Ref: ${m.reference || '—'}`;
+    case 'ORDER_CONFIRMED':      return `Ref: ${m.reference || '—'}`;
+    case 'ORDER_CANCELLED':      return `Ref: ${m.reference || '—'}`;
+    case 'ORDER_STATUS_UPDATED': return `${(m.from || '').replace(/_/g, ' ')} → ${(m.to || '').replace(/_/g, ' ')}${m.progress_percent != null ? ` (${m.progress_percent}%)` : ''}`;
+    case 'QUOTE_SUBMITTED':      return `RWF ${Number(m.quote_amount || 0).toLocaleString()}${m.proposed_timeline ? ` · ${m.proposed_timeline}` : ''}`;
+    case 'STAFF_ASSIGNED':       return m.assigned_staff_id ? 'Assigned to staff' : 'Unassigned';
+    case 'MILESTONE_ADDED':      return `"${m.title || '—'}"`;
+    case 'MILESTONE_COMPLETED':  return 'Milestone marked complete';
+    case 'DELIVERABLE_UPLOADED': return `File: ${m.file_name || '—'}`;
+    case 'INVOICE_CREATED':      return `RWF ${Number(m.amount || 0).toLocaleString()}`;
     case 'INVOICE_STATUS_UPDATED': return `Status → ${m.status || '—'}`;
-    case 'DELETE_INVOICE':      return 'Invoice permanently deleted';
-    case 'RECORD_PAYMENT':      return `RWF ${Number(m.amount || 0).toLocaleString()} via ${m.method?.replace(/_/g,' ') || '—'}`;
-    case 'CONFIRM_PAYMENT':     return `Payment confirmed`;
-    case 'DELETE_PAYMENT':      return 'Payment record deleted';
-    case 'DELETE_ORDER':        return `Ref: ${m.reference || '—'}`;
-    case 'MARK_CONTACT_READ':   return 'Contact marked as read';
-    default:                    return Object.keys(m).length ? Object.entries(m).map(([k,v]) => `${k}: ${v}`).join(' · ') : '—';
+    case 'DELETE_INVOICE':       return 'Invoice permanently deleted';
+    case 'RECORD_PAYMENT':       return `RWF ${Number(m.amount || 0).toLocaleString()} via ${(m.method || '').replace(/_/g, ' ')}`;
+    case 'CONFIRM_PAYMENT':      return 'Payment confirmed';
+    case 'DELETE_PAYMENT':       return 'Payment record deleted';
+    case 'DELETE_ORDER':         return `Ref: ${m.reference || '—'}`;
+    case 'MARK_CONTACT_READ':    return 'Contact marked as read';
+    default: {
+      const keys = Object.keys(m);
+      return keys.length ? keys.map(k => `${k}: ${m[k]}`).join(' · ') : '—';
+    }
   }
 }
 
 const TABS = [
-  { id: 'general',  label: 'General',  icon: faGear           },
-  { id: 'services', label: 'Services', icon: faListCheck       },
-  { id: 'contacts', label: 'Contacts', icon: faEnvelope        },
-  { id: 'audit',    label: 'Audit Log',icon: faClockRotateLeft },
+  { id: 'general',  label: 'General',   icon: faGear           },
+  { id: 'services', label: 'Services',  icon: faListCheck      },
+  { id: 'contacts', label: 'Contacts',  icon: faEnvelope       },
+  { id: 'audit',    label: 'Audit Log', icon: faClockRotateLeft },
 ];
 
 function Toast({ toasts }) {
@@ -149,20 +143,16 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts]   = useState([]);
 
-  // General
   const [profile, setProfile] = useState(() => ({ ...settings }));
   const [saving, setSaving]   = useState(false);
 
-  // Services
   const [services, setServices] = useState([]);
 
-  // Contacts
-  const [contacts, setContacts]   = useState([]);
+  const [contacts, setContacts]         = useState([]);
   const [contactSearch, setContactSearch] = useState('');
 
-  // Audit
-  const [auditLogs, setAuditLogs]   = useState([]);
-  const [auditSearch, setAuditSearch] = useState('');
+  const [auditLogs, setAuditLogs]       = useState([]);
+  const [auditSearch, setAuditSearch]   = useState('');
 
   const toast = useCallback((msg, type = 'success') => {
     const id = Date.now();
@@ -256,13 +246,13 @@ export default function AdminSettingsPage() {
             <div className="dash-table-wrap__header"><h3>Site Information</h3></div>
             <form onSubmit={handleSaveGeneral} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
               {[
-                { label: 'Site Title',     key: 'site_title'     },
-                { label: 'Tagline',        key: 'tagline'        },
-                { label: 'Website',        key: 'website'        },
-                { label: 'Contact Email',  key: 'contact_email', type: 'email' },
-                { label: 'Phone',          key: 'phone'          },
-                { label: 'Address',        key: 'address'        },
-                { label: 'TIN Number',     key: 'tin'            },
+                { label: 'Site Title',    key: 'site_title'    },
+                { label: 'Tagline',       key: 'tagline'       },
+                { label: 'Website',       key: 'website'       },
+                { label: 'Contact Email', key: 'contact_email', type: 'email' },
+                { label: 'Phone',         key: 'phone'         },
+                { label: 'Address',       key: 'address'       },
+                { label: 'TIN Number',    key: 'tin'           },
               ].map(({ label, key, type = 'text' }) => (
                 <div className="form-group" key={key} style={{ margin: 0 }}>
                   <label>{label}</label>
@@ -285,10 +275,11 @@ export default function AdminSettingsPage() {
                 <img src="/logo192.png" alt="logo" style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid var(--border)' }} />
                 <div>
                   <div style={{ fontWeight: 800, fontSize: 17, color: 'var(--primary)' }}>{profile.site_title || '—'}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Digital Marketing · Kigali, Rwanda</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{profile.tagline || '—'}</div>
                 </div>
               </div>
               {[
+                { label: 'Website', value: profile.website       },
                 { label: 'Email',   value: profile.contact_email },
                 { label: 'Phone',   value: profile.phone         },
                 { label: 'Address', value: profile.address       },
@@ -317,12 +308,7 @@ export default function AdminSettingsPage() {
           ) : (
             <table className="dash-table">
               <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Packages</th>
-                  <th>Status</th>
-                </tr>
+                <tr><th>Name</th><th>Category</th><th>Packages</th><th>Status</th></tr>
               </thead>
               <tbody>
                 {services.map(s => (
@@ -353,17 +339,12 @@ export default function AdminSettingsPage() {
       {tab === 'contacts' && (
         <>
           <div className="orders-toolbar" style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                {contacts.length} total · <strong style={{ color: unreadCount > 0 ? 'var(--primary)' : 'var(--text-muted)' }}>{unreadCount} unread</strong>
-              </span>
-            </div>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              {contacts.length} total · <strong style={{ color: unreadCount > 0 ? 'var(--primary)' : 'var(--text-muted)' }}>{unreadCount} unread</strong>
+            </span>
             <div className="orders-toolbar__right">
-              <div style={{ position: 'relative' }}>
-                <input className="orders-search" style={{ paddingLeft: 34 }}
-                  placeholder="Search name, email, message…"
-                  value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
-              </div>
+              <input className="orders-search" placeholder="Search name, email, message…"
+                value={contactSearch} onChange={e => setContactSearch(e.target.value)} />
               {unreadCount > 0 && (
                 <button className="btn btn-outline btn-sm" onClick={markAllRead}>
                   <FontAwesomeIcon icon={faEnvelopeOpen} /> Mark All Read
@@ -392,14 +373,7 @@ export default function AdminSettingsPage() {
             ) : (
               <table className="dash-table">
                 <thead>
-                  <tr>
-                    <th>From</th>
-                    <th>Phone</th>
-                    <th>Message</th>
-                    <th>Received</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
+                  <tr><th>From</th><th>Phone</th><th>Message</th><th>Received</th><th>Status</th><th></th></tr>
                 </thead>
                 <tbody>
                   {filteredContacts.map(c => (
@@ -440,13 +414,16 @@ export default function AdminSettingsPage() {
           <div className="orders-toolbar" style={{ marginBottom: 16 }}>
             <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{auditLogs.length} entries</span>
             <div className="orders-toolbar__right">
-              <div style={{ position: 'relative' }}>
-                <input className="orders-search" style={{ paddingLeft: 34 }}
-                  placeholder="Search action, actor, entity…"
-                  value={auditSearch} onChange={e => setAuditSearch(e.target.value)} />
-              </div>
+              <input className="orders-search" placeholder="Search action, actor, entity…"
+                value={auditSearch} onChange={e => setAuditSearch(e.target.value)} />
               <button className="btn btn-outline btn-sm" onClick={() => exportCsvData(
-                auditLogs.map(a => ({ when: fmtDate(a.created_at), actor: a.actor || 'System', action: a.action, entity: formatAuditEntity(a.action, a.entity, a.entity_id, a.meta), details: formatAuditDetail(a.action, a.meta) })),
+                auditLogs.map(a => ({
+                  when:    fmtDate(a.created_at),
+                  actor:   a.actor || 'System',
+                  action:  a.action,
+                  entity:  formatAuditEntity(a.action, a.entity, a.entity_id, a.meta),
+                  details: formatAuditDetail(a.action, a.meta),
+                })),
                 'audit-log.xls'
               )}>
                 <FontAwesomeIcon icon={faDownload} /> Export
@@ -468,13 +445,7 @@ export default function AdminSettingsPage() {
             ) : (
               <table className="dash-table">
                 <thead>
-                  <tr>
-                    <th>When</th>
-                    <th>Actor</th>
-                    <th>Action</th>
-                    <th>Entity</th>
-                    <th>Details</th>
-                  </tr>
+                  <tr><th>When</th><th>Actor</th><th>Action</th><th>Entity</th><th>Details</th></tr>
                 </thead>
                 <tbody>
                   {filteredAudit.map(a => (
