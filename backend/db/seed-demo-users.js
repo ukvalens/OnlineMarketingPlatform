@@ -23,6 +23,7 @@ const USERS = [
   { name: 'UKWITEGETSE Valens',  email: 'ukwitegetsev9@gmail.com',    phone: '+250780000001', role: 'admin' },
   { name: 'Valens Staff',        email: 'ukwitegetsevalens78@gmail.com', phone: '+250780000002', role: 'staff' },
   { name: 'Niyigaba',            email: 'niyigaba202@gmail.com',      phone: '+250780000003', role: 'finance' },
+  { name: 'Aaron Hagenimana',    email: 'aaronhagenimana6@gmail.com', phone: '+250780000004', role: 'editor' },
 ];
 
 async function run() {
