@@ -45,7 +45,40 @@ const ACTION_COLORS = {
   MARK_CONTACT_READ: '#6b7280',
 };
 
-function formatAuditDetail(action, meta) {
+function formatAuditEntity(action, entity, entityId, meta) {
+  const m = typeof meta === 'string' ? (() => { try { return JSON.parse(meta); } catch { return {}; } })() : (meta || {});
+  const shortId = entityId ? String(entityId).slice(0, 8) : null;
+  switch (action) {
+    case 'LOGIN':
+    case 'REGISTER':
+    case 'PASSWORD_RESET':
+    case 'PASSWORD_CHANGED':
+    case 'AVATAR_UPDATED':
+    case 'PROFILE_UPDATED':    return `User${shortId ? ` #${shortId}` : ''}`;
+    case 'CREATE_USER':
+    case 'UPDATE_USER':
+    case 'DELETE_USER':        return m.name ? m.name : `User${shortId ? ` #${shortId}` : ''}`;
+    case 'ORDER_PLACED':
+    case 'ORDER_CONFIRMED':
+    case 'ORDER_CANCELLED':
+    case 'ORDER_STATUS_UPDATED':
+    case 'QUOTE_SUBMITTED':
+    case 'STAFF_ASSIGNED':
+    case 'DELETE_ORDER':       return m.reference ? `Order ${m.reference}` : `Order${shortId ? ` #${shortId}` : ''}`;
+    case 'MILESTONE_ADDED':
+    case 'MILESTONE_COMPLETED':return m.title ? `Milestone "${m.title}"` : `Milestone${shortId ? ` #${shortId}` : ''}`;
+    case 'DELIVERABLE_UPLOADED':return m.file_name ? `File: ${m.file_name}` : `Deliverable${shortId ? ` #${shortId}` : ''}`;
+    case 'INVOICE_CREATED':
+    case 'INVOICE_STATUS_UPDATED':
+    case 'DELETE_INVOICE':     return `Invoice${shortId ? ` #${shortId}` : ''}`;
+    case 'RECORD_PAYMENT':
+    case 'CONFIRM_PAYMENT':
+    case 'DELETE_PAYMENT':     return `Payment${shortId ? ` #${shortId}` : ''}`;
+    case 'MARK_CONTACT_READ':  return `Contact${shortId ? ` #${shortId}` : ''}`;
+    default:                   return entity ? entity.replace(/_/g, ' ') : '—';
+  }
+}
+
   if (!meta && !action) return '—';
   const m = typeof meta === 'string' ? (() => { try { return JSON.parse(meta); } catch { return {}; } })() : (meta || {});
   switch (action) {
@@ -413,7 +446,7 @@ export default function AdminSettingsPage() {
                   value={auditSearch} onChange={e => setAuditSearch(e.target.value)} />
               </div>
               <button className="btn btn-outline btn-sm" onClick={() => exportCsvData(
-                auditLogs.map(a => ({ when: fmtDate(a.created_at), actor: a.actor || 'System', action: a.action, entity: a.entity, entity_id: a.entity_id || '', details: formatAuditDetail(a.action, a.meta) })),
+                auditLogs.map(a => ({ when: fmtDate(a.created_at), actor: a.actor || 'System', action: a.action, entity: formatAuditEntity(a.action, a.entity, a.entity_id, a.meta), details: formatAuditDetail(a.action, a.meta) })),
                 'audit-log.xls'
               )}>
                 <FontAwesomeIcon icon={faDownload} /> Export
@@ -458,8 +491,8 @@ export default function AdminSettingsPage() {
                           {a.action?.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td style={{ fontSize: 13, color: 'var(--text-muted)', textTransform: 'capitalize' }}>
-                        {a.entity?.replace(/_/g, ' ')}{a.entity_id ? ` #${String(a.entity_id).slice(0, 8)}` : ''}
+                      <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                        {formatAuditEntity(a.action, a.entity, a.entity_id, a.meta)}
                       </td>
                       <td style={{ fontSize: 12, color: 'var(--text-muted)', maxWidth: 260 }}>
                         {formatAuditDetail(a.action, a.meta)}
