@@ -15,15 +15,15 @@ const pool = require('../config/db');
 const DEMO_PASSWORD = 'Demo@1234';
 
 const USERS = [
-  { name: 'Demo Admin',          email: 'admin@demo.rw',              phone: '+250780000011', role: 'admin' },
-  { name: 'Demo Client',         email: 'client@demo.rw',             phone: '+250780000012', role: 'client' },
-  { name: 'Demo Staff',          email: 'staff@demo.rw',              phone: '+250780000013', role: 'staff' },
-  { name: 'Demo Editor',         email: 'editor@demo.rw',             phone: '+250780000014', role: 'editor' },
+  { name: 'Demo Admin',          email: 'admin@demo.rw',              phone: '+250780000011', role: 'admin'   },
+  { name: 'Demo Client',         email: 'client@demo.rw',             phone: '+250780000012', role: 'client'  },
+  { name: 'Demo Staff',          email: 'staff@demo.rw',              phone: '+250780000013', role: 'staff'   },
+  { name: 'Demo Editor',         email: 'editor@demo.rw',             phone: '+250780000014', role: 'editor'  },
   { name: 'Demo Finance',        email: 'finance@demo.rw',            phone: '+250780000015', role: 'finance' },
-  { name: 'UKWITEGETSE Valens',  email: 'ukwitegetsev9@gmail.com',    phone: '+250780000001', role: 'admin' },
+  { name: 'UKWITEGETSE Valens',  email: 'ukwitegetsev9@gmail.com',    phone: '+250780000001', role: 'admin'   },
   { name: 'Valens Staff',        email: 'ukwitegetsevalens78@gmail.com', phone: '+250780000002', role: 'staff' },
   { name: 'Niyigaba',            email: 'niyigaba202@gmail.com',      phone: '+250780000003', role: 'finance' },
-  { name: 'Aaron Hagenimana',    email: 'aaronhagenimana6@gmail.com', phone: '+250780000004', role: 'editor' },
+  { name: 'Aaron Hagenimana',    email: 'aaronhagenimana6@gmail.com', phone: '+250780000004', role: 'editor'  },
 ];
 
 async function run() {

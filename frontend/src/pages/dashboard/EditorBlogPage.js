@@ -177,12 +177,15 @@ export default function EditorBlogPage() {
                 <span className="blog-row__author">By {post.author}</span>
               </div>
               <div className="blog-row__actions">
-                {post.status === 'published' && (
-                  <Link to={`/blog/${post.slug}`} className="btn btn-outline btn-sm"
-                    title="View live post">
-                    <FontAwesomeIcon icon={faArrowUpRightFromSquare} /> View
-                  </Link>
-                )}
+                <Link
+                  to={`/blog/${post.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-outline btn-sm"
+                  title={post.status === 'published' ? 'View live post' : 'Preview post'}
+                >
+                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} /> {post.status === 'published' ? 'View' : 'Preview'}
+                </Link>
                 <button className="btn btn-outline btn-sm" onClick={() => togglePublish(post)}
                   title={post.status === 'published' ? 'Unpublish' : 'Publish'}>
                   <FontAwesomeIcon icon={post.status === 'published' ? faEyeSlash : faEye} />

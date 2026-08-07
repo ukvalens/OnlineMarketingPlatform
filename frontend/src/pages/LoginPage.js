@@ -25,7 +25,7 @@ const DEMO_ROLES = [
   { role: 'staff',   email: 'ukwitegetsevalens78@gmail.com', label: 'Staff' },
   { role: 'finance', email: 'niyigaba202@gmail.com',         label: 'Finance' },
   { role: 'client',  email: 'client@demo.rw',                label: 'Client' },
-  { role: 'editor',  email: 'editor@demo.rw',                label: 'Editor' },
+  { role: 'editor',  email: 'aaronhagenimana6@gmail.com',    label: 'Editor' },
 ];
 
 export default function LoginPage() {
