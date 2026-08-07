@@ -8,6 +8,7 @@ const validate = require('../../middleware/validate');
 const sendEmail = require('../../config/email');
 const sendSms = require('../../config/sms');
 const upload = require('../../config/multer');
+const audit = require('../../middleware/audit');
 
 const generateRef = () => 'ORD-' + Date.now().toString(36).toUpperCase();
 
@@ -86,6 +87,7 @@ router.post(
          VALUES ($1,$2,$3,$4,$5) RETURNING *`,
         [reference, req.user.id, service_id, package_id || null, notes]
       );
+      await audit({ userId: req.user.id, action: 'ORDER_PLACED', entity: 'orders', entityId: rows[0].id, meta: { reference, service_id }, req });
       res.status(201).json(rows[0]);
     } catch (err) {
       next(err);
@@ -110,6 +112,7 @@ router.patch(
       );
       if (!rows.length) return res.status(404).json({ message: 'Order not found or already quoted' });
       const timelineNote = proposed_timeline ? ` Estimated timeline: ${proposed_timeline}.` : '';
+      await audit({ userId: req.user.id, action: 'QUOTE_SUBMITTED', entity: 'orders', entityId: rows[0].id, meta: { quote_amount, proposed_timeline }, req });
       await notifyOrderUpdate(
         rows[0].id,
         'Your Quote is Ready',
@@ -138,6 +141,7 @@ router.patch('/:id/confirm', authenticate, authorize('client'), async (req, res,
        SELECT id, quote_amount, NOW() + INTERVAL '7 days' FROM orders WHERE id=$1`,
       [rows[0].id]
     );
+    await audit({ userId: req.user.id, action: 'ORDER_CONFIRMED', entity: 'orders', entityId: rows[0].id, meta: { reference: rows[0].reference }, req });
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -181,6 +185,7 @@ router.patch(
          WHERE id=$3 RETURNING *`,
         [status, progress_percent ?? null, req.params.id]
       );
+      await audit({ userId: req.user.id, action: 'ORDER_STATUS_UPDATED', entity: 'orders', entityId: rows[0].id, meta: { from: cur[0].status, to: status, progress_percent }, req });
       await notifyOrderUpdate(
         rows[0].id,
         `Order ${rows[0].reference} Updated`,
@@ -203,6 +208,7 @@ router.patch('/:id/assign', authenticate, authorize('staff', 'admin'), async (re
       [assigned_staff_id || null, req.params.id]
     );
     if (!rows.length) return res.status(404).json({ message: 'Order not found' });
+    await audit({ userId: req.user.id, action: 'STAFF_ASSIGNED', entity: 'orders', entityId: req.params.id, meta: { assigned_staff_id: assigned_staff_id || null }, req });
     res.json(rows[0]);
   } catch (err) { next(err); }
 });
@@ -218,6 +224,7 @@ router.patch('/:id/cancel', authenticate, async (req, res, next) => {
       isClient ? [req.params.id, req.user.id] : [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ message: 'Cannot cancel this order' });
+    await audit({ userId: req.user.id, action: 'ORDER_CANCELLED', entity: 'orders', entityId: rows[0].id, meta: { reference: rows[0].reference }, req });
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -232,6 +239,7 @@ router.post('/:id/milestones', authenticate, authorize('staff', 'admin'), async 
       'INSERT INTO order_milestones (order_id, title) VALUES ($1,$2) RETURNING *',
       [req.params.id, title]
     );
+    await audit({ userId: req.user.id, action: 'MILESTONE_ADDED', entity: 'order_milestones', entityId: rows[0].id, meta: { order_id: req.params.id, title }, req });
     res.status(201).json(rows[0]);
   } catch (err) {
     next(err);
@@ -246,6 +254,7 @@ router.patch('/:id/milestones/:mid', authenticate, authorize('staff', 'admin'), 
        WHERE id=$1 AND order_id=$2 RETURNING *`,
       [req.params.mid, req.params.id]
     );
+    await audit({ userId: req.user.id, action: 'MILESTONE_COMPLETED', entity: 'order_milestones', entityId: req.params.mid, meta: { order_id: req.params.id }, req });
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -261,6 +270,7 @@ router.post('/:id/deliverables', authenticate, authorize('staff', 'admin'), uplo
       'INSERT INTO deliverables (order_id, uploaded_by, file_url, file_name) VALUES ($1,$2,$3,$4) RETURNING *',
       [req.params.id, req.user.id, file_url, req.file.originalname]
     );
+    await audit({ userId: req.user.id, action: 'DELIVERABLE_UPLOADED', entity: 'deliverables', entityId: rows[0].id, meta: { order_id: req.params.id, file_name: req.file.originalname }, req });
     res.status(201).json(rows[0]);
   } catch (err) {
     next(err);

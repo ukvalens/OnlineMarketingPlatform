@@ -21,6 +21,7 @@ const pool = require('../../config/db');
 const sendEmail = require('../../config/email');
 const validate = require('../../middleware/validate');
 const authenticate = require('../../middleware/authenticate');
+const audit = require('../../middleware/audit');
 
 const signToken = (user) =>
   jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
@@ -47,11 +48,14 @@ router.post(
       const otp = String(Math.floor(100000 + Math.random() * 900000));
       const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
 
-      await pool.query(
+    await pool.query(
         `INSERT INTO users (name, email, phone, password_hash, company_name, industry, email_verified, email_verify_token, email_verify_expires)
          VALUES ($1,$2,$3,$4,$5,$6, FALSE, $7, $8)`,
         [name, email, phone, password_hash, company_name, industry, otp, otpExpires]
       );
+
+      // Audit: registration started
+      await audit({ action: 'REGISTER', entity: 'users', meta: { name, email }, req });
 
       await sendEmail({
         to: email,
@@ -174,6 +178,7 @@ router.post('/login-otp', [body('email').isEmail().normalizeEmail(), body('otp')
     );
 
     const user = rows[0];
+    await audit({ userId: user.id, action: 'LOGIN', entity: 'users', entityId: user.id, meta: { role: user.role }, req });
     res.json({ token: signToken(user), user });
   } catch (err) {
     next(err);
@@ -222,6 +227,7 @@ router.post(
         'UPDATE users SET password_hash=$1, reset_token=NULL, reset_token_expires=NULL WHERE id=$2',
         [password_hash, rows[0].id]
       );
+      await audit({ userId: rows[0].id, action: 'PASSWORD_RESET', entity: 'users', entityId: rows[0].id, req });
       res.json({ message: 'Password reset successful' });
     } catch (err) {
       next(err);

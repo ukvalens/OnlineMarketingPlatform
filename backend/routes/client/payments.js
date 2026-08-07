@@ -2,6 +2,7 @@ const router = require('express').Router();
 const pool = require('../../config/db');
 const authenticate = require('../../middleware/authenticate');
 const authorize = require('../../middleware/authorize');
+const audit = require('../../middleware/audit');
 
 // GET /api/payments — finance/admin sees all payments with order ref and client name
 router.get('/', authenticate, authorize('admin', 'finance'), async (req, res, next) => {
@@ -38,10 +39,7 @@ router.post('/', authenticate, authorize('admin', 'finance'), async (req, res, n
     // Mark invoice as paid
     await pool.query(`UPDATE invoices SET status='paid' WHERE id=$1`, [invoice_id]);
 
-    await pool.query(
-      'INSERT INTO audit_logs (user_id, action, entity, entity_id, meta) VALUES ($1,$2,$3,$4,$5)',
-      [req.user.id, 'RECORD_PAYMENT', 'payments', rows[0].id, JSON.stringify({ invoice_id, method, amount })]
-    );
+    await audit({ userId: req.user.id, action: 'RECORD_PAYMENT', entity: 'payments', entityId: rows[0].id, meta: { invoice_id, method, amount }, req });
 
     res.status(201).json(rows[0]);
   } catch (err) { next(err); }

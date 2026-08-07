@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const pool = require('../../config/db');
 const authenticate = require('../../middleware/authenticate');
 const authorize = require('../../middleware/authorize');
+const audit = require('../../middleware/audit');
 
 // GET /api/invoices — client sees own, finance/admin sees all
 router.get('/', authenticate, async (req, res, next) => {
@@ -29,6 +30,7 @@ router.post('/', authenticate, authorize('admin', 'finance'), async (req, res, n
        RETURNING *`,
       [order_id, amount, due_date || null]
     );
+    await audit({ userId: req.user.id, action: 'INVOICE_CREATED', entity: 'invoices', entityId: rows[0].id, meta: { order_id, amount }, req });
     res.status(201).json(rows[0]);
   } catch (err) { next(err); }
 });
@@ -42,6 +44,7 @@ router.patch('/:id/status', authenticate, authorize('admin', 'finance'), async (
       [status, req.params.id]
     );
     if (!rows.length) return res.status(404).json({ message: 'Invoice not found' });
+    await audit({ userId: req.user.id, action: 'INVOICE_STATUS_UPDATED', entity: 'invoices', entityId: req.params.id, meta: { status }, req });
     res.json(rows[0]);
   } catch (err) { next(err); }
 });

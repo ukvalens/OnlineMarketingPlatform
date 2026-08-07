@@ -17,11 +17,81 @@ const fmtDate = (d) => new Date(d).toLocaleString('en-RW', {
 });
 
 const ACTION_COLORS = {
-  CREATE_USER: '#15803d', UPDATE_USER: '#1d4ed8', DELETE_USER: '#b91c1c',
-  DELETE_ORDER: '#b91c1c', DELETE_INVOICE: '#b91c1c', DELETE_PAYMENT: '#b91c1c',
-  CONFIRM_PAYMENT: '#15803d', UPDATE_ORDER_STATUS: '#7c3aed',
-  MARK_CONTACT_READ: '#0e7490',
+  LOGIN: '#0e7490',
+  REGISTER: '#15803d',
+  PASSWORD_RESET: '#b45309',
+  PASSWORD_CHANGED: '#b45309',
+  CREATE_USER: '#15803d',
+  UPDATE_USER: '#1d4ed8',
+  DELETE_USER: '#b91c1c',
+  PROFILE_UPDATED: '#1d4ed8',
+  AVATAR_UPDATED: '#1d4ed8',
+  ORDER_PLACED: '#7c3aed',
+  ORDER_CONFIRMED: '#15803d',
+  ORDER_CANCELLED: '#b91c1c',
+  ORDER_STATUS_UPDATED: '#7c3aed',
+  QUOTE_SUBMITTED: '#0e7490',
+  STAFF_ASSIGNED: '#1d4ed8',
+  MILESTONE_ADDED: '#0e7490',
+  MILESTONE_COMPLETED: '#15803d',
+  DELIVERABLE_UPLOADED: '#7c3aed',
+  INVOICE_CREATED: '#0e7490',
+  INVOICE_STATUS_UPDATED: '#1d4ed8',
+  DELETE_INVOICE: '#b91c1c',
+  RECORD_PAYMENT: '#15803d',
+  CONFIRM_PAYMENT: '#15803d',
+  DELETE_PAYMENT: '#b91c1c',
+  DELETE_ORDER: '#b91c1c',
+  MARK_CONTACT_READ: '#6b7280',
 };
+
+function formatAuditDetail(action, meta) {
+  if (!meta && !action) return '—';
+  const m = typeof meta === 'string' ? (() => { try { return JSON.parse(meta); } catch { return {}; } })() : (meta || {});
+  switch (action) {
+    case 'LOGIN':               return `Role: ${m.role || '—'}`;
+    case 'REGISTER':            return `${m.name || ''} · ${m.email || ''}`;
+    case 'PASSWORD_RESET':      return 'Password reset via email link';
+    case 'PASSWORD_CHANGED':    return 'Password changed successfully';
+    case 'AVATAR_UPDATED':      return 'Profile photo updated';
+    case 'PROFILE_UPDATED': {
+      const parts = [];
+      if (m.name)         parts.push(`Name → ${m.name}`);
+      if (m.email)        parts.push(`Email → ${m.email}`);
+      if (m.phone)        parts.push(`Phone → ${m.phone}`);
+      if (m.company_name) parts.push(`Company → ${m.company_name}`);
+      return parts.length ? parts.join(' · ') : 'Profile updated';
+    }
+    case 'CREATE_USER':         return `${m.role ? `Role: ${m.role}` : 'New user created'}`;
+    case 'UPDATE_USER': {
+      const parts = [];
+      if (m.role !== undefined && m.role !== null)      parts.push(`Role → ${m.role}`);
+      if (m.is_active !== undefined && m.is_active !== null) parts.push(m.is_active ? 'Activated' : 'Deactivated');
+      if (m.name)  parts.push(`Name → ${m.name}`);
+      if (m.email) parts.push(`Email → ${m.email}`);
+      return parts.length ? parts.join(' · ') : 'User updated';
+    }
+    case 'DELETE_USER':         return `${m.name || ''} (${m.email || ''})`;
+    case 'ORDER_PLACED':        return `Ref: ${m.reference || '—'}`;
+    case 'ORDER_CONFIRMED':     return `Ref: ${m.reference || '—'}`;
+    case 'ORDER_CANCELLED':     return `Ref: ${m.reference || '—'}`;
+    case 'ORDER_STATUS_UPDATED':return `${m.from?.replace(/_/g,' ')} → ${m.to?.replace(/_/g,' ')}${m.progress_percent != null ? ` (${m.progress_percent}%)` : ''}`;
+    case 'QUOTE_SUBMITTED':     return `RWF ${Number(m.quote_amount || 0).toLocaleString()}${m.proposed_timeline ? ` · ${m.proposed_timeline}` : ''}`;
+    case 'STAFF_ASSIGNED':      return m.assigned_staff_id ? `Assigned to staff` : 'Unassigned';
+    case 'MILESTONE_ADDED':     return `"${m.title || '—'}"`;
+    case 'MILESTONE_COMPLETED': return `Milestone completed`;
+    case 'DELIVERABLE_UPLOADED':return `File: ${m.file_name || '—'}`;
+    case 'INVOICE_CREATED':     return `RWF ${Number(m.amount || 0).toLocaleString()}`;
+    case 'INVOICE_STATUS_UPDATED': return `Status → ${m.status || '—'}`;
+    case 'DELETE_INVOICE':      return 'Invoice permanently deleted';
+    case 'RECORD_PAYMENT':      return `RWF ${Number(m.amount || 0).toLocaleString()} via ${m.method?.replace(/_/g,' ') || '—'}`;
+    case 'CONFIRM_PAYMENT':     return `Payment confirmed`;
+    case 'DELETE_PAYMENT':      return 'Payment record deleted';
+    case 'DELETE_ORDER':        return `Ref: ${m.reference || '—'}`;
+    case 'MARK_CONTACT_READ':   return 'Contact marked as read';
+    default:                    return Object.keys(m).length ? Object.entries(m).map(([k,v]) => `${k}: ${v}`).join(' · ') : '—';
+  }
+}
 
 const TABS = [
   { id: 'general',  label: 'General',  icon: faGear           },
@@ -343,7 +413,7 @@ export default function AdminSettingsPage() {
                   value={auditSearch} onChange={e => setAuditSearch(e.target.value)} />
               </div>
               <button className="btn btn-outline btn-sm" onClick={() => exportCsvData(
-                auditLogs.map(a => ({ when: fmtDate(a.created_at), actor: a.actor || 'System', action: a.action, entity: a.entity, entity_id: a.entity_id || '', meta: a.meta ? JSON.stringify(a.meta) : '' })),
+                auditLogs.map(a => ({ when: fmtDate(a.created_at), actor: a.actor || 'System', action: a.action, entity: a.entity, entity_id: a.entity_id || '', details: formatAuditDetail(a.action, a.meta) })),
                 'audit-log.xls'
               )}>
                 <FontAwesomeIcon icon={faDownload} /> Export
@@ -391,8 +461,8 @@ export default function AdminSettingsPage() {
                       <td style={{ fontSize: 13, color: 'var(--text-muted)', textTransform: 'capitalize' }}>
                         {a.entity?.replace(/_/g, ' ')}{a.entity_id ? ` #${String(a.entity_id).slice(0, 8)}` : ''}
                       </td>
-                      <td style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {a.meta ? JSON.stringify(a.meta) : '—'}
+                      <td style={{ fontSize: 12, color: 'var(--text-muted)', maxWidth: 260 }}>
+                        {formatAuditDetail(a.action, a.meta)}
                       </td>
                     </tr>
                   ))}

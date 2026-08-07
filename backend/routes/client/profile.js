@@ -5,6 +5,7 @@ const pool = require('../../config/db');
 const authenticate = require('../../middleware/authenticate');
 const validate = require('../../middleware/validate');
 const upload = require('../../config/multer');
+const audit = require('../../middleware/audit');
 
 // GET /api/profile
 router.get('/', authenticate, async (req, res, next) => {
@@ -28,6 +29,7 @@ router.put('/avatar', authenticate, upload.single('avatar'), async (req, res, ne
       'UPDATE users SET avatar_url=$1, updated_at=NOW() WHERE id=$2 RETURNING id, name, email, phone, company_name, industry, avatar_url',
       [avatar_url, req.user.id]
     );
+    await audit({ userId: req.user.id, action: 'AVATAR_UPDATED', entity: 'users', entityId: req.user.id, req });
     res.json(rows[0]);
   } catch (err) { next(err); }
 });
@@ -51,6 +53,7 @@ router.put(
          WHERE id=$7 RETURNING id, name, email, phone, company_name, industry, avatar_url`,
         [name, phone, company_name, industry, email, avatar_url, req.user.id]
       );
+      await audit({ userId: req.user.id, action: 'PROFILE_UPDATED', entity: 'users', entityId: req.user.id, meta: { name, phone, company_name, industry, email }, req });
       res.json(rows[0]);
     } catch (err) {
       next(err);
@@ -73,6 +76,7 @@ router.put(
 
       const password_hash = await bcrypt.hash(new_password, 12);
       await pool.query('UPDATE users SET password_hash=$1, updated_at=NOW() WHERE id=$2', [password_hash, req.user.id]);
+      await audit({ userId: req.user.id, action: 'PASSWORD_CHANGED', entity: 'users', entityId: req.user.id, req });
       res.json({ message: 'Password updated successfully' });
     } catch (err) {
       next(err);

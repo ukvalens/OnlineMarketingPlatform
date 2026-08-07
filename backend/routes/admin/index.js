@@ -13,6 +13,7 @@ const pool = require('../../config/db');
 const authenticate = require('../../middleware/authenticate');
 const authorize = require('../../middleware/authorize');
 const { Parser } = require('json2csv');
+const audit = require('../../middleware/audit');
 
 // All admin routes require authentication + at least staff role
 router.use(authenticate, authorize('admin', 'finance', 'staff'));
@@ -107,10 +108,7 @@ router.delete('/users/:id', authorize('admin'), async (req, res, next) => {
     if (!rows.length) return res.status(404).json({ message: 'User not found' });
 
     await pool.query('DELETE FROM users WHERE id=$1', [req.params.id]);
-    await pool.query(
-      'INSERT INTO audit_logs (user_id, action, entity, entity_id, meta) VALUES ($1,$2,$3,$4,$5)',
-      [req.user.id, 'DELETE_USER', 'users', req.params.id, JSON.stringify({ name: rows[0].name, email: rows[0].email })]
-    );
+    await audit({ userId: req.user.id, action: 'DELETE_USER', entity: 'users', entityId: req.params.id, meta: { name: rows[0].name, email: rows[0].email }, req });
     res.json({ message: 'User deleted.' });
   } catch (err) { next(err); }
 });
@@ -121,8 +119,7 @@ router.delete('/orders/:id', authorize('admin'), async (req, res, next) => {
     const { rows } = await pool.query('SELECT reference FROM orders WHERE id=$1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ message: 'Order not found' });
     await pool.query('DELETE FROM orders WHERE id=$1', [req.params.id]);
-    await pool.query('INSERT INTO audit_logs (user_id, action, entity, entity_id, meta) VALUES ($1,$2,$3,$4,$5)',
-      [req.user.id, 'DELETE_ORDER', 'orders', req.params.id, JSON.stringify({ reference: rows[0].reference })]);
+    await audit({ userId: req.user.id, action: 'DELETE_ORDER', entity: 'orders', entityId: req.params.id, meta: { reference: rows[0].reference }, req });
     res.json({ message: 'Order deleted.' });
   } catch (err) { next(err); }
 });
@@ -133,8 +130,7 @@ router.delete('/invoices/:id', authorize('admin'), async (req, res, next) => {
     const { rows } = await pool.query('SELECT id FROM invoices WHERE id=$1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ message: 'Invoice not found' });
     await pool.query('DELETE FROM invoices WHERE id=$1', [req.params.id]);
-    await pool.query('INSERT INTO audit_logs (user_id, action, entity, entity_id) VALUES ($1,$2,$3,$4)',
-      [req.user.id, 'DELETE_INVOICE', 'invoices', req.params.id]);
+    await audit({ userId: req.user.id, action: 'DELETE_INVOICE', entity: 'invoices', entityId: req.params.id, req });
     res.json({ message: 'Invoice deleted.' });
   } catch (err) { next(err); }
 });
@@ -145,8 +141,7 @@ router.delete('/payments/:id', authorize('admin'), async (req, res, next) => {
     const { rows } = await pool.query('SELECT id FROM payments WHERE id=$1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ message: 'Payment not found' });
     await pool.query('DELETE FROM payments WHERE id=$1', [req.params.id]);
-    await pool.query('INSERT INTO audit_logs (user_id, action, entity, entity_id) VALUES ($1,$2,$3,$4)',
-      [req.user.id, 'DELETE_PAYMENT', 'payments', req.params.id]);
+    await audit({ userId: req.user.id, action: 'DELETE_PAYMENT', entity: 'payments', entityId: req.params.id, req });
     res.json({ message: 'Payment deleted.' });
   } catch (err) { next(err); }
 });
@@ -264,8 +259,9 @@ router.patch('/contacts/:id/read', async (req, res, next) => {
       [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ message: 'Contact not found' });
-    await pool.query('INSERT INTO audit_logs (user_id, action, entity, entity_id) VALUES ($1,$2,$3,$4)',
-      [req.user.id, 'MARK_CONTACT_READ', 'contact_submissions', req.params.id]
+    await pool.query(
+      'INSERT INTO audit_logs (user_id, action, entity, entity_id, meta) VALUES ($1,$2,$3,$4,$5)',
+      [req.user.id, 'MARK_CONTACT_READ', 'contact_submissions', req.params.id, null]
     );
     res.json(rows[0]);
   } catch (err) { next(err); }
