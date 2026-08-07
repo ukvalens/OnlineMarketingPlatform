@@ -36,36 +36,35 @@ const parseMeta = (meta) => {
   try { return JSON.parse(meta); } catch { return {}; }
 };
 
-function formatAuditEntity(action, entity, entityId, meta) {
+function formatAuditEntity(action, entity, entityId, meta, actor) {
   const m = parseMeta(meta);
-  const shortId = entityId ? String(entityId).slice(0, 8) : null;
   switch (action) {
     case 'LOGIN':
     case 'REGISTER':
     case 'PASSWORD_RESET':
     case 'PASSWORD_CHANGED':
     case 'AVATAR_UPDATED':
-    case 'PROFILE_UPDATED':      return `User${shortId ? ` #${shortId}` : ''}`;
+    case 'PROFILE_UPDATED':      return actor || 'Unknown user';
     case 'CREATE_USER':
     case 'UPDATE_USER':
-    case 'DELETE_USER':          return m.name ? m.name : `User${shortId ? ` #${shortId}` : ''}`;
+    case 'DELETE_USER':          return m.name || m.email || actor || 'User';
     case 'ORDER_PLACED':
     case 'ORDER_CONFIRMED':
     case 'ORDER_CANCELLED':
     case 'ORDER_STATUS_UPDATED':
     case 'QUOTE_SUBMITTED':
     case 'STAFF_ASSIGNED':
-    case 'DELETE_ORDER':         return m.reference ? `Order ${m.reference}` : `Order${shortId ? ` #${shortId}` : ''}`;
+    case 'DELETE_ORDER':         return m.reference ? `Order ${m.reference}` : 'Order';
     case 'MILESTONE_ADDED':
-    case 'MILESTONE_COMPLETED':  return m.title ? `Milestone "${m.title}"` : `Milestone${shortId ? ` #${shortId}` : ''}`;
-    case 'DELIVERABLE_UPLOADED': return m.file_name ? `File: ${m.file_name}` : `Deliverable${shortId ? ` #${shortId}` : ''}`;
+    case 'MILESTONE_COMPLETED':  return m.title ? `"${m.title}"` : 'Milestone';
+    case 'DELIVERABLE_UPLOADED': return m.file_name || 'Deliverable';
     case 'INVOICE_CREATED':
     case 'INVOICE_STATUS_UPDATED':
-    case 'DELETE_INVOICE':       return `Invoice${shortId ? ` #${shortId}` : ''}`;
+    case 'DELETE_INVOICE':       return m.reference ? `Invoice ${m.reference}` : 'Invoice';
     case 'RECORD_PAYMENT':
     case 'CONFIRM_PAYMENT':
-    case 'DELETE_PAYMENT':       return `Payment${shortId ? ` #${shortId}` : ''}`;
-    case 'MARK_CONTACT_READ':    return `Contact${shortId ? ` #${shortId}` : ''}`;
+    case 'DELETE_PAYMENT':       return m.reference ? `Payment · ${m.reference}` : 'Payment';
+    case 'MARK_CONTACT_READ':    return m.name || 'Contact';
     default:                     return entity ? entity.replace(/_/g, ' ') : '—';
   }
 }
@@ -421,7 +420,7 @@ export default function AdminSettingsPage() {
                   when:    fmtDate(a.created_at),
                   actor:   a.actor || 'System',
                   action:  a.action,
-                  entity:  formatAuditEntity(a.action, a.entity, a.entity_id, a.meta),
+                  entity:  formatAuditEntity(a.action, a.entity, a.entity_id, a.meta, a.actor),
                   details: formatAuditDetail(a.action, a.meta),
                 })),
                 'audit-log.xls'
@@ -463,7 +462,7 @@ export default function AdminSettingsPage() {
                         </span>
                       </td>
                       <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                        {formatAuditEntity(a.action, a.entity, a.entity_id, a.meta)}
+                        {formatAuditEntity(a.action, a.entity, a.entity_id, a.meta, a.actor)}
                       </td>
                       <td style={{ fontSize: 12, color: 'var(--text-muted)', maxWidth: 260 }}>
                         {formatAuditDetail(a.action, a.meta)}
