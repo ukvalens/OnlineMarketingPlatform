@@ -2,6 +2,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { printElement, exportCsvData } from '../api';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 
 const fmt     = (n) => Number(n).toLocaleString();
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-RW', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -10,6 +11,7 @@ const fmtTime = (d) => new Date(d).toLocaleTimeString('en-RW', { hour: '2-digit'
 const STATUS_COLORS = { pending: 'requested', partial: 'in_progress', paid: 'completed', failed: 'cancelled' };
 
 export default function ReceiptCard({ receipt }) {
+  const { settings } = useSiteSettings();
   const paidPayments = receipt.payments?.filter(p => p.paid_at) ?? [];
   const qrValue = `${window.location.origin}/verify/receipt/${receipt.id}`;
 
@@ -43,10 +45,10 @@ export default function ReceiptCard({ receipt }) {
 
       {/* Header: logo + company */}
       <div className="receipt-header">
-        <img src="/logo192.png" alt="DigitalMarkRW" className="receipt-logo-img" />
+        <img src="/logo192.png" alt={settings.site_title} className="receipt-logo-img" />
         <div className="receipt-company">
-          <div className="receipt-title">DigitalMarkRW</div>
-          <div className="receipt-sub">Digital Marketing &amp; Business Promotion · Rwanda</div>
+          <div className="receipt-title">{settings.site_title}</div>
+          <div className="receipt-sub">{settings.tagline} · Rwanda</div>
         </div>
         <div className="receipt-badge">RECEIPT</div>
       </div>
@@ -130,7 +132,7 @@ export default function ReceiptCard({ receipt }) {
 
       {/* Footer note */}
       <div className="receipt-note">
-        This receipt was issued by DigitalMarkRW · Kigali, Rwanda · Scan QR to verify authenticity
+        This receipt was issued by {settings.site_title} · {settings.address} · Scan QR to verify authenticity
       </div>
 
       {/* Action buttons — hidden on print */}

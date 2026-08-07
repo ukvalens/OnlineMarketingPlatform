@@ -3,10 +3,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch, faDownload, faEye, faXmark,
   faUserCheck, faUserXmark, faBuilding,
-  faEnvelope, faPhone, faCalendar, faBoxOpen, faTrash
+  faEnvelope, faPhone, faCalendar, faBoxOpen, faTrash, faPrint
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
-import api, { exportCsv } from '../../api';
+import api, { exportCsv, printElement } from '../../api';
 import usePagination from '../../hooks/usePagination';
 import Pagination from '../../components/Pagination';
 import './orders.css';
@@ -122,11 +122,14 @@ export default function AdminClientsPage() {
           <button className="btn btn-outline btn-sm" onClick={() => exportCsv('clients', 'clients.csv')}>
             <FontAwesomeIcon icon={faDownload} /> Export CSV
           </button>
+          <button className="btn btn-outline btn-sm" onClick={() => printElement('clients-table-print', 'Clients')}>
+            <FontAwesomeIcon icon={faPrint} /> PDF
+          </button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="dash-table-wrap">
+      <div className="dash-table-wrap" id="clients-table-print">
         {loading ? (
           <div className="dash-empty"><span className="spinner" style={{ margin: '0 auto' }} /></div>
         ) : filtered.length === 0 ? (
@@ -210,7 +213,7 @@ export default function AdminClientsPage() {
         <div className="drawer-overlay" onClick={() => setDrawer(null)}>
           <div className="drawer" onClick={e => e.stopPropagation()}>
             <div className="drawer__header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <div className="user-avatar user-avatar--lg" style={{ background: avatarColor(drawer.id) }}>
                   {initials(drawer.name)}
                 </div>
@@ -221,11 +224,16 @@ export default function AdminClientsPage() {
                   </span>
                 </div>
               </div>
-              <button className="modal__close" onClick={() => setDrawer(null)}><FontAwesomeIcon icon={faXmark} /></button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button className="btn btn-outline btn-sm" onClick={() => printElement('client-detail-print', `Client ${drawer.name}`)}>  
+                  <FontAwesomeIcon icon={faPrint} /> PDF
+                </button>
+                <button className="modal__close" onClick={() => setDrawer(null)}><FontAwesomeIcon icon={faXmark} /></button>
+              </div>
             </div>
 
             <div className="drawer__body">
-              {/* Contact info */}
+              <div id="client-detail-print">}
               <div className="client-info-list">
                 <div className="client-info-item">
                   <FontAwesomeIcon icon={faEnvelope} />
@@ -271,6 +279,8 @@ export default function AdminClientsPage() {
                   <span>Total Paid</span>
                   <strong>{drawer.total_paid > 0 ? `RWF ${fmt(drawer.total_paid)}` : '—'}</strong>
                 </div>
+              </div>
+
               </div>
 
               {/* Actions */}

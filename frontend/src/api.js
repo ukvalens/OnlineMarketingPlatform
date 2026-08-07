@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getSettings } from './context/SiteSettingsContext';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const UPLOAD_BASE = API_BASE.replace('/api', '');
@@ -74,6 +75,7 @@ export function exportCsvData(rows, filename) {
     return `<tr>${cells}</tr>`;
   }).join('');
 
+  const s = getSettings();
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
   xmlns:x="urn:schemas-microsoft-com:office:excel"
   xmlns="http://www.w3.org/TR/REC-html40">
@@ -93,17 +95,17 @@ export function exportCsvData(rows, filename) {
   </style>
 </head>
 <body>
-  <p class="company">DigitalMarkRW</p>
-  <p class="info-cell">Digital Marketing &amp; Business Promotion &middot; Kigali, Rwanda</p>
+  <p class="company">${esc(s.site_title)}</p>
+  <p class="info-cell">${esc(s.tagline)} &middot; ${esc(s.address)}</p>
   <p class="info-cell">Report: <b>${esc(title)}</b> &nbsp;&nbsp; Generated: ${esc(now)}</p>
-  <p class="info-cell">www.digitalmarkrw.com &nbsp;&middot;&nbsp; info@digitalmarkrw.com &nbsp;&middot;&nbsp; +250 780 000 000</p>
+  <p class="info-cell">${esc(s.website)} &nbsp;&middot;&nbsp; ${esc(s.contact_email)} &nbsp;&middot;&nbsp; ${esc(s.phone)}</p>
   <br/>
   <table>
     <thead><tr>${headerRow}</tr></thead>
     <tbody>${dataRows}</tbody>
   </table>
   <br/>
-  <p class="info-cell">Total records: ${rows.length} &nbsp;&nbsp; TIN: 123456789 &nbsp;&middot;&nbsp; KG 123 St, Kigali, Rwanda</p>
+  <p class="info-cell">Total records: ${rows.length} &nbsp;&nbsp; TIN: ${esc(s.tin)} &nbsp;&middot;&nbsp; ${esc(s.address)}</p>
 </body>
 </html>`;
 
@@ -130,12 +132,13 @@ export function printElement(elementId, title = 'Document') {
     hour: '2-digit', minute: '2-digit', hour12: false,
   });
 
+  const s = getSettings();
   const win = window.open('', '_blank', 'width=900,height=1000');
   win.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>${title} — DigitalMarkRW</title>
+  <title>${title} — ${s.site_title}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -369,17 +372,17 @@ export function printElement(elementId, title = 'Document') {
   <div class="pdf-page">
     <div class="pdf-header">
       <div class="pdf-header__left">
-        <img src="${window.location.origin}/logo192.png" alt="DigitalMarkRW" class="pdf-logo" />
+        <img src="${window.location.origin}/logo192.png" alt="${s.site_title}" class="pdf-logo" />
         <div>
-          <div class="pdf-company-name">DigitalMarkRW</div>
-          <div class="pdf-company-sub">Digital Marketing &amp; Business Promotion · Kigali, Rwanda</div>
+          <div class="pdf-company-name">${s.site_title}</div>
+          <div class="pdf-company-sub">${s.tagline} · ${s.address}</div>
         </div>
       </div>
       <div class="pdf-header__right">
         <div class="pdf-doc-title">${title}</div>
         <div class="pdf-meta">
           Generated: ${now}<br/>
-          www.digitalmarkrw.com · info@digitalmarkrw.com
+          ${s.website} · ${s.contact_email}
         </div>
       </div>
     </div>
@@ -387,7 +390,7 @@ export function printElement(elementId, title = 'Document') {
     ${clone.outerHTML}
 
     <div class="pdf-footer">
-      <span>DigitalMarkRW · KG 123 St, Kigali, Rwanda · TIN: 123456789</span>
+      <span>${s.site_title} · ${s.address} · TIN: ${s.tin}</span>
       <span>Printed: ${now}</span>
     </div>
   </div>

@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Link } from 'react-router-dom';
 import {
   faPlus, faEdit, faTrash, faXmark, faCheck,
-  faEye, faEyeSlash, faSearch, faImage, faNewspaper
+  faEye, faEyeSlash, faSearch, faImage, faNewspaper, faArrowUpRightFromSquare
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
 import api, { getImageUrl } from '../../api';
@@ -176,6 +177,12 @@ export default function EditorBlogPage() {
                 <span className="blog-row__author">By {post.author}</span>
               </div>
               <div className="blog-row__actions">
+                {post.status === 'published' && (
+                  <Link to={`/blog/${post.slug}`} className="btn btn-outline btn-sm"
+                    title="View live post">
+                    <FontAwesomeIcon icon={faArrowUpRightFromSquare} /> View
+                  </Link>
+                )}
                 <button className="btn btn-outline btn-sm" onClick={() => togglePublish(post)}
                   title={post.status === 'published' ? 'Unpublish' : 'Publish'}>
                   <FontAwesomeIcon icon={post.status === 'published' ? faEyeSlash : faEye} />

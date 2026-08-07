@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faBook, faImage, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faBook, faImage, faArrowRight, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from './DashboardLayout';
 import ResponsiveTable from '../../components/ui/ResponsiveTable';
-import api, { exportCsv } from '../../api';
+import api, { exportCsv, printElement } from '../../api';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -13,6 +13,8 @@ export default function AdminDashboard() {
   const [orders, setOrders]       = useState([]);
   const [posts, setPosts]         = useState([]);
   const [portfolio, setPortfolio] = useState([]);
+  const [clients, setClients]     = useState([]);
+  const [payments, setPayments]   = useState([]);
   const [loading, setLoading]     = useState(true);
 
   useEffect(() => {
@@ -26,6 +28,10 @@ export default function AdminDashboard() {
       requests.push(api.get('/blog/admin/all'));
       requests.push(api.get('/portfolio'));
     }
+    if (isAdmin) {
+      requests.push(api.get('/admin/clients'));
+      requests.push(api.get('/payments'));
+    }
 
     Promise.all(requests)
       .then((results) => {
@@ -35,6 +41,10 @@ export default function AdminDashboard() {
         if (isEditor || user?.role === 'admin') {
           setPosts(results[idx++]?.data || []);
           setPortfolio(results[idx++]?.data || []);
+        }
+        if (isAdmin) {
+          setClients(results[idx++]?.data || []);
+          setPayments(results[idx++]?.data || []);
         }
       })
       .catch(() => {})
@@ -173,11 +183,14 @@ export default function AdminDashboard() {
                   <FontAwesomeIcon icon={faDownload} /> Export CSV
                 </button>
               )}
+              <button className="btn btn-outline btn-sm" onClick={() => printElement('dashboard-orders-print', 'Recent Orders')}>
+                <FontAwesomeIcon icon={faPrint} /> PDF
+              </button>
               <Link to="/dashboard/admin/orders" className="btn btn-primary btn-sm">View All</Link>
             </div>
           </div>
           <ResponsiveTable minWidth={600}>
-            <table className="dash-table">
+            <table className="dash-table" id="dashboard-orders-print">
               <thead>
                 <tr>
                   <th>Reference</th>
@@ -234,14 +247,51 @@ export default function AdminDashboard() {
             </div>
             <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { label: 'Export Clients CSV',  path: 'clients',  file: 'clients.csv'  },
-                { label: 'Export Orders CSV',   path: 'orders',   file: 'orders.csv'   },
-                { label: 'Export Payments CSV', path: 'payments', file: 'payments.csv' },
-              ].map(({ label, path, file }) => (
-                <button key={path} className="btn btn-outline btn-sm" onClick={() => exportCsv(path, file)}>
-                  <FontAwesomeIcon icon={faDownload} /> {label}
-                </button>
+                { label: 'Clients',  csvPath: 'clients',  csvFile: 'clients.csv',  pdfId: 'qe-clients-print'  },
+                { label: 'Orders',   csvPath: 'orders',   csvFile: 'orders.csv',   pdfId: 'dashboard-orders-print' },
+                { label: 'Payments', csvPath: 'payments', csvFile: 'payments.csv', pdfId: 'qe-payments-print' },
+              ].map(({ label, csvPath, csvFile, pdfId }) => (
+                <div key={csvPath} style={{ display: 'flex', gap: 6 }}>
+                  <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => exportCsv(csvPath, csvFile)}>
+                    <FontAwesomeIcon icon={faDownload} /> Export {label} CSV
+                  </button>
+                  <button className="btn btn-outline btn-sm" onClick={() => printElement(pdfId, `${label} Report`)}>
+                    <FontAwesomeIcon icon={faPrint} /> PDF
+                  </button>
+                </div>
               ))}
+            </div>
+
+            {/* Hidden printable tables for Clients & Payments */}
+            <div style={{ display: 'none' }}>
+              <div id="qe-clients-print">
+                <table className="dash-table">
+                  <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Orders</th><th>Total Paid (RWF)</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {clients.map(c => (
+                      <tr key={c.id}>
+                        <td>{c.name}</td><td>{c.email}</td><td>{c.company_name || '—'}</td>
+                        <td>{c.order_count}</td><td>{Number(c.total_paid).toLocaleString()}</td>
+                        <td>{c.is_active ? 'Active' : 'Inactive'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div id="qe-payments-print">
+                <table className="dash-table">
+                  <thead><tr><th>Transaction Ref</th><th>Order Ref</th><th>Client</th><th>Method</th><th>Amount (RWF)</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {payments.map(p => (
+                      <tr key={p.id}>
+                        <td>{p.transaction_ref || '—'}</td><td>{p.reference || '—'}</td>
+                        <td>{p.client_name || '—'}</td><td>{p.method?.replace('_', ' ')}</td>
+                        <td>{Number(p.amount).toLocaleString()}</td><td>{p.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

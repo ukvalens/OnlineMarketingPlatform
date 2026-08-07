@@ -2,10 +2,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEye, faUsers, faEnvelope, faBoxOpen,
-  faMoneyBillWave, faUserPlus, faArrowTrendUp, faDownload
+  faMoneyBillWave, faUserPlus, faArrowTrendUp, faDownload, faPrint
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
-import api from '../../api';
+import api, { printElement } from '../../api';
 import './dashboard.css';
 import './admin-content.css';
 import './orders.css';
@@ -150,14 +150,18 @@ export default function AdminAnalyticsPage() {
             {r.label}
           </button>
         ))}
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           <a href="http://localhost:5000/api/admin/export/orders" target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
             <FontAwesomeIcon icon={faDownload} /> Export Orders
           </a>
+          <button className="btn btn-outline btn-sm" onClick={() => printElement('analytics-content-print', 'Analytics Report')}>
+            <FontAwesomeIcon icon={faPrint} /> PDF
+          </button>
         </div>
       </div>
 
       {/* Stat cards */}
+      <div id="analytics-content-print">
       <div className="stat-cards" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 28 }}>
         {loading
           ? [...Array(6)].map((_, i) => (
@@ -246,6 +250,7 @@ export default function AdminAnalyticsPage() {
             }
           </div>
         </div>
+      </div>
       </div>
 
     </DashboardLayout>

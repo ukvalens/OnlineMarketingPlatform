@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LangProvider } from './context/LangContext';
+import { SiteSettingsProvider } from './context/SiteSettingsContext';
 import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
 
@@ -47,6 +48,7 @@ const Soon = ({ title }) => (
 
 export default function App() {
   return (
+    <SiteSettingsProvider>
     <LangProvider>
     <AuthProvider>
       <BrowserRouter>
@@ -139,5 +141,6 @@ export default function App() {
       </BrowserRouter>
     </AuthProvider>
     </LangProvider>
+    </SiteSettingsProvider>
   );
 }
