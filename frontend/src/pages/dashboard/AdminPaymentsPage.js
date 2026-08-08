@@ -5,6 +5,7 @@ import {
   faCheck, faEye, faMobileAlt, faMoneyBill, faTrash, faPrint
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
 import api, { exportCsvData, printElement } from '../../api';
 import usePagination from '../../hooks/usePagination';
 import Pagination from '../../components/Pagination';
@@ -20,6 +21,8 @@ const METHOD_ICONS = { mtn_momo: '📱', airtel_money: '📲', card: '💳' };
 const STATUS_COLORS = { pending: 'requested', paid: 'completed', failed: 'cancelled', partial: 'in_progress' };
 
 export default function AdminPaymentsPage() {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'admin';
   const [payments, setPayments]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [filter, setFilter]       = useState('all');
@@ -226,9 +229,11 @@ export default function AdminPaymentsPage() {
                       <button className="btn btn-outline btn-sm" onClick={() => setDrawer(p)} title="View details">
                         <FontAwesomeIcon icon={faEye} />
                       </button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p)} title="Delete">
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
+                      {canDelete && (
+                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p)} title="Delete">
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

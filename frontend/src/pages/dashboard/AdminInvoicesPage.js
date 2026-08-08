@@ -6,6 +6,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import ReceiptCard from '../../components/ReceiptCard';
 import DashboardLayout from './DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
 import api, { exportCsvData, printElement } from '../../api';
 import usePagination from '../../hooks/usePagination';
 import Pagination from '../../components/Pagination';
@@ -20,6 +21,8 @@ const STATUS_FILTERS = ['all', 'pending', 'partial', 'paid', 'failed'];
 const STATUS_COLORS  = { pending: 'requested', partial: 'in_progress', paid: 'completed', failed: 'cancelled' };
 
 export default function AdminInvoicesPage() {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'admin';
   const [invoices, setInvoices]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [filter, setFilter]       = useState('all');
@@ -221,9 +224,11 @@ export default function AdminInvoicesPage() {
                       <button className="btn btn-outline btn-sm" onClick={() => openEdit(inv)} title="Update status">
                         <FontAwesomeIcon icon={faPen} />
                       </button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(inv)} title="Delete">
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
+                      {canDelete && (
+                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(inv)} title="Delete">
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

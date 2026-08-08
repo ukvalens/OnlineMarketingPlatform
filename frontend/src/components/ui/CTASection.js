@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faPhone, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faPhone, faEnvelope, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import api from '../../api';
 import './CTASection.css';
 
@@ -48,7 +48,7 @@ export default function CTASection() {
             <h3>Get a Free Quote</h3>
             {status === 'success' ? (
               <div className="cta-success">
-                <span>✅</span>
+                <FontAwesomeIcon icon={faCircleCheck} style={{ fontSize: 40, color: '#16a34a', marginBottom: 8 }} />
                 <p>Message sent! We'll get back to you within 24 hours.</p>
               </div>
             ) : (

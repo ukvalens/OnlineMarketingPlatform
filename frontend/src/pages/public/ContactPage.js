@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faPhone, faEnvelope, faMapPin, faClock } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faPhone, faEnvelope, faMapPin, faClock, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook, faTwitter, faInstagram, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 import Layout from '../../components/layout/Layout';
 import usePageView from '../../hooks/usePageView';
@@ -55,7 +55,7 @@ export default function ContactPage() {
               <h2>Send Us a Message</h2>
               {status === 'success' ? (
                 <div className="contact__success">
-                  <span>✅</span>
+                  <FontAwesomeIcon icon={faCircleCheck} style={{ fontSize: 48, color: '#16a34a', marginBottom: 12 }} />
                   <h3>Message Sent!</h3>
                   <p>Thank you for reaching out. Our team will get back to you within 24 hours.</p>
                   <button className="btn btn-primary" onClick={() => setStatus(null)}>Send Another Message</button>

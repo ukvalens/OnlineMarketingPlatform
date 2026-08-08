@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
 import api from '../../api';
 import './Testimonials.css';
 
@@ -30,7 +32,7 @@ export default function Testimonials() {
           {display.map((t, i) => (
             <div key={i} className="testimonial card">
               <div className="testimonial__stars">
-                {[...Array(t.rating || 5)].map((_, j) => <span key={j}>⭐</span>)}
+                {[...Array(t.rating || 5)].map((_, j) => <FontAwesomeIcon key={j} icon={faStar} style={{ color: '#f59e0b', fontSize: 14 }} />)}
               </div>
               <p className="testimonial__content">"{t.content}"</p>
               <div className="testimonial__author">

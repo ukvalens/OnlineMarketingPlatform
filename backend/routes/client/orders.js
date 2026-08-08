@@ -38,8 +38,17 @@ router.get('/', authenticate, async (req, res, next) => {
   try {
     const isClient = req.user.role === 'client';
     const query = isClient
-      ? `SELECT o.*, s.name AS service_name FROM orders o JOIN services s ON s.id=o.service_id WHERE o.client_id=$1 ORDER BY o.created_at DESC`
-      : `SELECT o.*, s.name AS service_name, u.name AS client_name FROM orders o JOIN services s ON s.id=o.service_id JOIN users u ON u.id=o.client_id ORDER BY o.created_at DESC`;
+      ? `SELECT o.*, s.name AS service_name, sp.tier, sp.price AS package_price
+         FROM orders o
+         JOIN services s ON s.id=o.service_id
+         LEFT JOIN service_packages sp ON sp.id=o.package_id
+         WHERE o.client_id=$1 ORDER BY o.created_at DESC`
+      : `SELECT o.*, s.name AS service_name, u.name AS client_name, sp.tier, sp.price AS package_price
+         FROM orders o
+         JOIN services s ON s.id=o.service_id
+         JOIN users u ON u.id=o.client_id
+         LEFT JOIN service_packages sp ON sp.id=o.package_id
+         ORDER BY o.created_at DESC`;
     const params = isClient ? [req.user.id] : [];
     const { rows } = await pool.query(query, params);
     res.json(rows);

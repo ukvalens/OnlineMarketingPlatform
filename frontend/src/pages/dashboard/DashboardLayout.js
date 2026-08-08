@@ -11,7 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHouse, faBagShopping, faMessage, faFileLines, faUser,
   faUsers, faChartBar, faGear, faRightFromBracket, faBars, faXmark,
-  faTableCells, faBook, faImage, faDollarSign, faClipboard
+  faTableCells, faBook, faImage, faDollarSign, faClipboard, faLayerGroup, faMoneyBillTransfer
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import { getImageUrl } from '../../api';
@@ -20,40 +20,53 @@ import './dashboard.css';
 
 const NAV = {
   client: [
-    { label: 'Overview', to: '/dashboard/client', icon: <FontAwesomeIcon icon={faHouse} />, end: true },
-    { label: 'My Orders', to: '/dashboard/client/orders', icon: <FontAwesomeIcon icon={faBagShopping} /> },
-    { label: 'Messages', to: '/dashboard/client/messages', icon: <FontAwesomeIcon icon={faMessage} /> },
-    { label: 'Invoices', to: '/dashboard/client/invoices', icon: <FontAwesomeIcon icon={faFileLines} /> },
-    { label: 'Profile', to: '/dashboard/client/profile', icon: <FontAwesomeIcon icon={faUser} /> },
+    { label: 'Overview',     to: '/dashboard/client',          icon: <FontAwesomeIcon icon={faHouse} />,           end: true },
+    { label: 'My Orders',    to: '/dashboard/client/orders',   icon: <FontAwesomeIcon icon={faBagShopping} /> },
+    { label: 'Messages',     to: '/dashboard/client/messages', icon: <FontAwesomeIcon icon={faMessage} /> },
+    { label: 'Invoices',     to: '/dashboard/client/invoices', icon: <FontAwesomeIcon icon={faFileLines} /> },
+    { label: 'Services',     to: '/dashboard/services',        icon: <FontAwesomeIcon icon={faLayerGroup} /> },
+    { label: 'Blog',         to: '/dashboard/blog',            icon: <FontAwesomeIcon icon={faBook} /> },
+    { label: 'Portfolio',    to: '/dashboard/portfolio',       icon: <FontAwesomeIcon icon={faImage} /> },
+    { label: 'Transactions', to: '/dashboard/transactions',    icon: <FontAwesomeIcon icon={faMoneyBillTransfer} /> },
+    { label: 'Profile',      to: '/dashboard/client/profile',  icon: <FontAwesomeIcon icon={faUser} /> },
   ],
   staff: [
-    { label: 'Overview', to: '/dashboard/admin', icon: <FontAwesomeIcon icon={faHouse} />, end: true },
-    { label: 'Orders',   to: '/dashboard/admin/orders',   icon: <FontAwesomeIcon icon={faClipboard} /> },
-    { label: 'Messages', to: '/dashboard/admin/messages', icon: <FontAwesomeIcon icon={faMessage} /> },
-    { label: 'Clients',  to: '/dashboard/admin/clients',  icon: <FontAwesomeIcon icon={faUsers} /> },
-    { label: 'Profile',  to: '/profile',                  icon: <FontAwesomeIcon icon={faUser} /> },
+    { label: 'Overview',     to: '/dashboard/admin',           icon: <FontAwesomeIcon icon={faHouse} />,    end: true },
+    { label: 'Orders',       to: '/dashboard/admin/orders',    icon: <FontAwesomeIcon icon={faClipboard} /> },
+    { label: 'Messages',     to: '/dashboard/admin/messages',  icon: <FontAwesomeIcon icon={faMessage} /> },
+    { label: 'Clients',      to: '/dashboard/admin/clients',   icon: <FontAwesomeIcon icon={faUsers} /> },
+    { label: 'Services',     to: '/dashboard/services',        icon: <FontAwesomeIcon icon={faLayerGroup} /> },
+    { label: 'Blog',         to: '/dashboard/blog',            icon: <FontAwesomeIcon icon={faBook} /> },
+    { label: 'Portfolio',    to: '/dashboard/portfolio',       icon: <FontAwesomeIcon icon={faImage} /> },
+    { label: 'Transactions', to: '/dashboard/transactions',    icon: <FontAwesomeIcon icon={faMoneyBillTransfer} /> },
+    { label: 'Profile',      to: '/profile',                   icon: <FontAwesomeIcon icon={faUser} /> },
   ],
   editor: [
-    { label: 'Overview', to: '/dashboard/admin', icon: <FontAwesomeIcon icon={faHouse} />, end: true },
-    { label: 'Blog Posts', to: '/dashboard/admin/blog', icon: <FontAwesomeIcon icon={faBook} /> },
-    { label: 'Portfolio', to: '/dashboard/admin/portfolio', icon: <FontAwesomeIcon icon={faImage} /> },
+    { label: 'Overview',   to: '/dashboard/admin',           icon: <FontAwesomeIcon icon={faHouse} />,  end: true },
+    { label: 'Blog Posts', to: '/dashboard/admin/blog',      icon: <FontAwesomeIcon icon={faBook} /> },
+    { label: 'Portfolio',  to: '/dashboard/admin/portfolio', icon: <FontAwesomeIcon icon={faImage} /> },
+    { label: 'Services',   to: '/dashboard/services',        icon: <FontAwesomeIcon icon={faLayerGroup} /> },
   ],
   finance: [
-    { label: 'Overview', to: '/dashboard/admin', icon: <FontAwesomeIcon icon={faHouse} />, end: true },
-    { label: 'Invoices', to: '/dashboard/admin/invoices', icon: <FontAwesomeIcon icon={faDollarSign} /> },
-    { label: 'Payments', to: '/dashboard/admin/payments', icon: <FontAwesomeIcon icon={faFileLines} /> },
+    { label: 'Overview',     to: '/dashboard/admin',           icon: <FontAwesomeIcon icon={faHouse} />,           end: true },
+    { label: 'Invoices',     to: '/dashboard/admin/invoices',  icon: <FontAwesomeIcon icon={faDollarSign} /> },
+    { label: 'Payments',     to: '/dashboard/admin/payments',  icon: <FontAwesomeIcon icon={faFileLines} /> },
+    { label: 'Transactions', to: '/dashboard/transactions',    icon: <FontAwesomeIcon icon={faMoneyBillTransfer} /> },
+    { label: 'Services',     to: '/dashboard/services',        icon: <FontAwesomeIcon icon={faLayerGroup} /> },
   ],
   admin: [
-    { label: 'Overview', to: '/dashboard/admin', icon: <FontAwesomeIcon icon={faTableCells} />, end: true },
-    { label: 'Orders', to: '/dashboard/admin/orders', icon: <FontAwesomeIcon icon={faClipboard} /> },
-    { label: 'Clients', to: '/dashboard/admin/clients', icon: <FontAwesomeIcon icon={faUsers} /> },
-    { label: 'Messages', to: '/dashboard/admin/messages', icon: <FontAwesomeIcon icon={faMessage} /> },
-    { label: 'Invoices', to: '/dashboard/admin/invoices', icon: <FontAwesomeIcon icon={faDollarSign} /> },
-    { label: 'Blog Posts', to: '/dashboard/admin/blog', icon: <FontAwesomeIcon icon={faBook} /> },
-    { label: 'Portfolio', to: '/dashboard/admin/portfolio', icon: <FontAwesomeIcon icon={faImage} /> },
-    { label: 'Analytics', to: '/dashboard/admin/analytics', icon: <FontAwesomeIcon icon={faChartBar} /> },
-    { label: 'Users', to: '/dashboard/admin/users', icon: <FontAwesomeIcon icon={faUsers} /> },
-    { label: 'Settings', to: '/dashboard/admin/settings', icon: <FontAwesomeIcon icon={faGear} /> },
+    { label: 'Overview',     to: '/dashboard/admin',           icon: <FontAwesomeIcon icon={faTableCells} />, end: true },
+    { label: 'Orders',       to: '/dashboard/admin/orders',    icon: <FontAwesomeIcon icon={faClipboard} /> },
+    { label: 'Clients',      to: '/dashboard/admin/clients',   icon: <FontAwesomeIcon icon={faUsers} /> },
+    { label: 'Messages',     to: '/dashboard/admin/messages',  icon: <FontAwesomeIcon icon={faMessage} /> },
+    { label: 'Invoices',     to: '/dashboard/admin/invoices',  icon: <FontAwesomeIcon icon={faDollarSign} /> },
+    { label: 'Blog Posts',   to: '/dashboard/admin/blog',      icon: <FontAwesomeIcon icon={faBook} /> },
+    { label: 'Portfolio',    to: '/dashboard/admin/portfolio', icon: <FontAwesomeIcon icon={faImage} /> },
+    { label: 'Services',     to: '/dashboard/services',        icon: <FontAwesomeIcon icon={faLayerGroup} /> },
+    { label: 'Transactions', to: '/dashboard/transactions',    icon: <FontAwesomeIcon icon={faMoneyBillTransfer} /> },
+    { label: 'Analytics',   to: '/dashboard/admin/analytics', icon: <FontAwesomeIcon icon={faChartBar} /> },
+    { label: 'Users',        to: '/dashboard/admin/users',     icon: <FontAwesomeIcon icon={faUsers} /> },
+    { label: 'Settings',     to: '/dashboard/admin/settings',  icon: <FontAwesomeIcon icon={faGear} /> },
   ],
 };
 
@@ -63,7 +76,16 @@ export default function DashboardLayout({ children, pageTitle, pageSubtitle }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isDesktop } = useBreakpoint();
 
-  const navLinks = NAV[user?.role] || NAV.client;
+  const profilePath = {
+    client:  '/dashboard/client/profile',
+    staff:   '/dashboard/staff/profile',
+    editor:  '/dashboard/editor/profile',
+    finance: '/dashboard/finance/profile',
+    admin:   '/dashboard/admin/profile',
+  }[user?.role] || '/dashboard/client/profile';
+  const navLinks = (NAV[user?.role] || NAV.client).map(l =>
+    l.to === '/profile' ? { ...l, to: profilePath } : l
+  );
 
   // Auto-close sidebar when resizing to desktop
   useEffect(() => { if (isDesktop) setSidebarOpen(false); }, [isDesktop]);
@@ -97,7 +119,7 @@ export default function DashboardLayout({ children, pageTitle, pageSubtitle }) {
         </nav>
 
         <div className="sidebar__footer">
-          <NavLink to="/profile" className={({ isActive }) => `sidebar__user sidebar__user--link${isActive ? ' active' : ''}`} onClick={() => setSidebarOpen(false)}>
+          <NavLink to={profilePath} className={({ isActive }) => `sidebar__user sidebar__user--link${isActive ? ' active' : ''}`} onClick={() => setSidebarOpen(false)}>
             <div className="sidebar__user-avatar">
               {user?.avatar_url
                 ? <img src={getImageUrl(user.avatar_url)} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
@@ -130,7 +152,7 @@ export default function DashboardLayout({ children, pageTitle, pageSubtitle }) {
             {pageSubtitle && <p>{pageSubtitle}</p>}
           </div>
           <div className="topbar__actions">
-            <Link to="/profile" className="topbar__avatar" title="My Profile">
+            <Link to={profilePath} className="topbar__avatar" title="My Profile">
               {user?.avatar_url
                 ? <img src={getImageUrl(user.avatar_url)} alt={user.name} />
                 : <span>{user?.name?.[0]?.toUpperCase()}</span>

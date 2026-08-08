@@ -178,9 +178,7 @@ export default function EditorBlogPage() {
               </div>
               <div className="blog-row__actions">
                 <Link
-                  to={`/blog/${post.slug}`}
-                  target="_blank"
-                  rel="noreferrer"
+                  to={`/dashboard/blog/${post.slug}`}
                   className="btn btn-outline btn-sm"
                   title={post.status === 'published' ? 'View live post' : 'Preview post'}
                 >

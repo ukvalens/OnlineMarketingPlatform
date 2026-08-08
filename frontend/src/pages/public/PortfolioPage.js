@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { faUpRightFromSquare, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../components/layout/Layout';
+import DashboardLayout from '../dashboard/DashboardLayout';
 import usePageView from '../../hooks/usePageView';
 import api, { getImageUrl } from '../../api';
 import './Portfolio.css';
@@ -27,7 +28,10 @@ const PLACEHOLDERS = [
   { id:8, title:'Corporate Branding Package', category:'Branding', client_name:'Kigali Logistics', description:'Complete rebrand including logo, stationery, and digital assets.' },
 ];
 
-export default function PortfolioPage() {
+export default function PortfolioPage({ inDashboard = false }) {
+  const Wrap = inDashboard
+    ? ({ children }) => <DashboardLayout pageTitle="Portfolio" pageSubtitle="Our work & case studies">{children}</DashboardLayout>
+    : Layout;
   usePageView();
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('All');
@@ -46,7 +50,7 @@ export default function PortfolioPage() {
   const visible = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
-    <Layout>
+    <Wrap>
       <div className="page-hero">
         <div className="container">
           <span className="section-label">Our Work</span>
@@ -95,17 +99,17 @@ export default function PortfolioPage() {
           )}
           {!loading && totalPages > 1 && (
             <div className="portfolio-pagination">
-              <button className="page-btn" onClick={() => setPage(p => p - 1)} disabled={page === 1}>‹</button>
+            <button className="page-btn" onClick={() => setPage(p => p - 1)} disabled={page === 1}><FontAwesomeIcon icon={faChevronLeft} /></button>
               {[...Array(totalPages)].map((_, i) => (
                 <button key={i} className={`page-btn${page === i + 1 ? ' page-btn--active' : ''}`} onClick={() => setPage(i + 1)}>
                   {i + 1}
                 </button>
               ))}
-              <button className="page-btn" onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>›</button>
+              <button className="page-btn" onClick={() => setPage(p => p + 1)} disabled={page === totalPages}><FontAwesomeIcon icon={faChevronRight} /></button>
             </div>
           )}
         </div>
       </section>
-    </Layout>
+    </Wrap>
   );
 }

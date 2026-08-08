@@ -6,6 +6,7 @@ import {
   faEnvelope, faPhone, faCalendar, faBoxOpen, faTrash, faPrint
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardLayout from './DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
 import api, { exportCsv, printElement } from '../../api';
 import usePagination from '../../hooks/usePagination';
 import Pagination from '../../components/Pagination';
@@ -21,6 +22,8 @@ const AVATAR_COLORS = ['#0057B8','#7c3aed','#0e7490','#15803d','#b45309','#be185
 const avatarColor = (id) => AVATAR_COLORS[(id?.charCodeAt(0) || 0) % AVATAR_COLORS.length];
 
 export default function AdminClientsPage() {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'admin';
   const [clients, setClients]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
@@ -195,9 +198,11 @@ export default function AdminClientsPage() {
                       >
                         <FontAwesomeIcon icon={c.is_active ? faUserXmark : faUserCheck} />
                       </button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c)} title="Delete permanently">
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
+                      {canDelete && (
+                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c)} title="Delete permanently">
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -292,9 +297,11 @@ export default function AdminClientsPage() {
                   <FontAwesomeIcon icon={drawer.is_active ? faUserXmark : faUserCheck} />
                   {drawer.is_active ? ' Deactivate' : ' Reactivate'}
                 </button>
-                <button className="btn btn-danger" onClick={() => handleDelete(drawer)}>
-                  <FontAwesomeIcon icon={faTrash} /> Delete Permanently
-                </button>
+                {canDelete && (
+                  <button className="btn btn-danger" onClick={() => handleDelete(drawer)}>
+                    <FontAwesomeIcon icon={faTrash} /> Delete Permanently
+                  </button>
+                )}
               </div>
 
               {/* Order history */}

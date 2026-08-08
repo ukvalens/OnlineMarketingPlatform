@@ -6,7 +6,7 @@ import {
   faChartLine, faCheckCircle, faClock, faCircleExclamation,
   faBullhorn, faPaintBrush, faGlobe, faPhotoFilm, faBriefcase,
   faHandshake, faCartShopping, faChevronRight, faSpinner,
-  faInbox, faRocket, faCircleCheck
+  faInbox, faRocket, faCircleCheck, faPaperclip
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from './DashboardLayout';
@@ -93,7 +93,7 @@ export default function ClientDashboard() {
 
   return (
     <DashboardLayout
-      pageTitle={`${greeting}, ${user?.name?.split(' ')[0]} 👋`}
+      pageTitle={`${greeting}, ${user?.name?.split(' ')[0]}`}
       pageSubtitle="Here's an overview of your marketing projects"
     >
       {/* ── Stats ── */}
@@ -274,7 +274,7 @@ export default function ClientDashboard() {
                         <span className="cd-msg-item__ref">#{msg.reference}</span>
                         <span className="cd-msg-item__time">{fmtTime(msg.sent_at)}</span>
                       </div>
-                      <p className="cd-msg-item__text">{msg.content || '📎 Attachment'}</p>
+                      <p className="cd-msg-item__text">{msg.content || <><FontAwesomeIcon icon={faPaperclip} style={{ marginRight: 4 }} />Attachment</>}</p>
                     </div>
                   </div>
                 ))}
@@ -291,7 +291,7 @@ export default function ClientDashboard() {
             <h3>Our Services</h3>
             <p>Explore what we can do for your business</p>
           </div>
-          <Link to="/services" className="btn btn-outline btn-sm">Browse All <FontAwesomeIcon icon={faArrowRight} /></Link>
+          <Link to="/dashboard/services" className="btn btn-outline btn-sm">Browse All <FontAwesomeIcon icon={faArrowRight} /></Link>
         </div>
         <div className="cd-services-grid">
           {loading ? (

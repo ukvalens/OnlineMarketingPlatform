@@ -31,6 +31,7 @@ const fmtTime = (d) => new Date(d).toLocaleString('en-RW', { day: '2-digit', mon
 export default function AdminOrdersPage() {
   const { user } = useAuth();
   const canEdit = ['admin', 'staff'].includes(user?.role);
+  const canDelete = user?.role === 'admin';
 
   const [orders, setOrders]   = useState([]);
   const [staff, setStaff]     = useState([]);
@@ -321,9 +322,11 @@ export default function AdminOrdersPage() {
                       <button className="btn btn-outline btn-sm" onClick={() => openDrawer(o)}>
                         <FontAwesomeIcon icon={faEye} /> Manage
                       </button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(o)} title="Delete">
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
+                      {canDelete && (
+                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(o)} title="Delete">
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

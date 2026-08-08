@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faBook, faImage, faArrowRight, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faBook, faImage, faArrowRight, faPrint,
+  faUsers, faCubesStacked, faMoneyBill, faBell,
+  faBoxesStacked, faBolt, faMagnifyingGlass, faCircleCheck,
+  faGlobe, faPenNib } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from './DashboardLayout';
 import ResponsiveTable from '../../components/ui/ResponsiveTable';
@@ -55,25 +58,25 @@ export default function AdminDashboard() {
 
   // Editor-specific stats
   const editorStats = [
-    { icon: '📝', label: 'Total Posts',  value: posts.length,                                       color: 'blue'   },
-    { icon: '🌐', label: 'Published',    value: posts.filter(p => p.status === 'published').length,  color: 'green'  },
-    { icon: '📄', label: 'Drafts',       value: posts.filter(p => p.status === 'draft').length,      color: 'orange' },
-    { icon: '🖼️', label: 'Portfolio',    value: portfolio.length,                                    color: 'purple' },
-    { icon: '🌟', label: 'Published Portfolio', value: portfolio.filter(p => p.is_published).length, color: 'green'  },
+    { icon: faPenNib,      label: 'Total Posts',  value: posts.length,                                       color: 'blue'   },
+    { icon: faGlobe,       label: 'Published',    value: posts.filter(p => p.status === 'published').length,  color: 'green'  },
+    { icon: faBook,        label: 'Drafts',       value: posts.filter(p => p.status === 'draft').length,      color: 'orange' },
+    { icon: faImage,       label: 'Portfolio',    value: portfolio.length,                                    color: 'purple' },
+    { icon: faCircleCheck, label: 'Published Portfolio', value: portfolio.filter(p => p.is_published).length, color: 'green'  },
   ];
 
   const adminStats = analytics
     ? [
-        { icon: '👥', label: 'Total Clients', value: analytics.total_clients,                              color: 'blue'   },
-        { icon: '📦', label: 'Total Orders',  value: orders.length,                                        color: 'purple' },
-        { icon: '💰', label: 'Revenue (RWF)', value: `${Number(analytics.total_revenue_rwf).toLocaleString()}`, color: 'green' },
-        { icon: '📬', label: 'New Inquiries', value: analytics.unread_contacts,                            color: 'orange' },
+        { icon: faUsers,       label: 'Total Clients', value: analytics.total_clients,                              color: 'blue'   },
+        { icon: faBoxesStacked,label: 'Total Orders',  value: orders.length,                                        color: 'purple' },
+        { icon: faMoneyBill,   label: 'Revenue (RWF)', value: `${Number(analytics.total_revenue_rwf).toLocaleString()}`, color: 'green' },
+        { icon: faBell,        label: 'New Inquiries', value: analytics.unread_contacts,                            color: 'orange' },
       ]
     : [
-        { icon: '📦', label: 'Total Orders',  value: orders.length,                                        color: 'blue'   },
-        { icon: '⚡', label: 'In Progress',   value: orders.filter(o => o.status === 'in_progress').length, color: 'purple' },
-        { icon: '🔍', label: 'In Review',     value: orders.filter(o => o.status === 'in_review').length,  color: 'orange' },
-        { icon: '✅', label: 'Completed',     value: orders.filter(o => o.status === 'completed').length,  color: 'green'  },
+        { icon: faBoxesStacked, label: 'Total Orders',  value: orders.length,                                        color: 'blue'   },
+        { icon: faBolt,         label: 'In Progress',   value: orders.filter(o => o.status === 'in_progress').length, color: 'purple' },
+        { icon: faMagnifyingGlass, label: 'In Review',  value: orders.filter(o => o.status === 'in_review').length,  color: 'orange' },
+        { icon: faCircleCheck,  label: 'Completed',     value: orders.filter(o => o.status === 'completed').length,  color: 'green'  },
       ];
 
   const stats = isEditor ? editorStats : adminStats;
@@ -88,7 +91,7 @@ export default function AdminDashboard() {
       <div className="stat-cards">
         {stats.map(({ icon, label, value, color }) => (
           <div key={label} className="stat-card">
-            <div className={`stat-card__icon stat-card__icon--${color}`}>{icon}</div>
+            <div className={`stat-card__icon stat-card__icon--${color}`}><FontAwesomeIcon icon={icon} /></div>
             <div>
               <div className="stat-card__value">{loading ? '—' : value}</div>
               <div className="stat-card__label">{label}</div>

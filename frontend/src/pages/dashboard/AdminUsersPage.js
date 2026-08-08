@@ -49,6 +49,7 @@ const emptyForm = { name: '', email: '', password: '', phone: '', role: 'client'
 
 export default function AdminUsersPage() {
   const { user: me } = useAuth();
+  const canDelete = me?.role === 'admin';
   const [users, setUsers]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState('');
@@ -318,9 +319,11 @@ export default function AdminUsersPage() {
                           >
                             <FontAwesomeIcon icon={u.is_active ? faUserXmark : faUserCheck} />
                           </button>
-                          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u)} title="Delete permanently">
-                            <FontAwesomeIcon icon={faTrash} />
-                          </button>
+                          {canDelete && (
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u)} title="Delete permanently">
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
@@ -522,9 +525,11 @@ export default function AdminUsersPage() {
                     <FontAwesomeIcon icon={drawer.is_active ? faUserXmark : faUserCheck} />
                     {drawer.is_active ? ' Deactivate' : ' Reactivate'}
                   </button>
-                  <button className="btn btn-danger" onClick={() => handleDelete(drawer)}>
-                    <FontAwesomeIcon icon={faTrash} /> Delete Permanently
-                  </button>
+                  {canDelete && (
+                    <button className="btn btn-danger" onClick={() => handleDelete(drawer)}>
+                      <FontAwesomeIcon icon={faTrash} /> Delete Permanently
+                    </button>
+                  )}
                 </div>
               )}
 

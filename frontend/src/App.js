@@ -23,6 +23,8 @@ import AdminInvoicesPage from './pages/dashboard/AdminInvoicesPage';
 import AdminPaymentsPage from './pages/dashboard/AdminPaymentsPage';
 import AdminAnalyticsPage from './pages/dashboard/AdminAnalyticsPage';
 import AdminSettingsPage from './pages/dashboard/AdminSettingsPage';
+import DashboardServicesPage from './pages/dashboard/DashboardServicesPage';
+import TransactionsPage from './pages/dashboard/TransactionsPage';
 import EditorBlogPage from './pages/dashboard/EditorBlogPage';
 import ClientMessagesPage from './pages/dashboard/ClientMessagesPage';
 import AdminMessagesPage from './pages/dashboard/AdminMessagesPage';
@@ -91,9 +93,21 @@ export default function App() {
             <ProtectedRoute roles={['client']}><ProfilePage /></ProtectedRoute>
           } />
 
-          {/* Shared profile for all roles */}
+          {/* Profile — role-based dashboard routes */}
           <Route path="/profile" element={
             <ProtectedRoute roles={['client','staff','editor','finance','admin']}><ProfilePage /></ProtectedRoute>
+          } />
+          <Route path="/dashboard/staff/profile" element={
+            <ProtectedRoute roles={['staff']}><ProfilePage /></ProtectedRoute>
+          } />
+          <Route path="/dashboard/editor/profile" element={
+            <ProtectedRoute roles={['editor']}><ProfilePage /></ProtectedRoute>
+          } />
+          <Route path="/dashboard/finance/profile" element={
+            <ProtectedRoute roles={['finance']}><ProfilePage /></ProtectedRoute>
+          } />
+          <Route path="/dashboard/admin/profile" element={
+            <ProtectedRoute roles={['admin']}><ProfilePage /></ProtectedRoute>
           } />
 
           {/* Admin / Staff dashboard */}
@@ -131,6 +145,39 @@ export default function App() {
           } />
           <Route path="/dashboard/admin/settings" element={
             <ProtectedRoute roles={['admin']}><AdminSettingsPage /></ProtectedRoute>
+          } />
+
+          {/* Services — accessible to all authenticated roles */}
+          <Route path="/dashboard/services" element={
+            <ProtectedRoute roles={['client','staff','editor','finance','admin']}>
+              <DashboardServicesPage />
+            </ProtectedRoute>
+          } />
+
+          {/* Blog — dashboard-wrapped */}
+          <Route path="/dashboard/blog" element={
+            <ProtectedRoute roles={['client','staff','editor','finance','admin']}>
+              <BlogPage inDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/blog/:slug" element={
+            <ProtectedRoute roles={['client','staff','editor','finance','admin']}>
+              <BlogPostPage inDashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* Portfolio — dashboard-wrapped */}
+          <Route path="/dashboard/portfolio" element={
+            <ProtectedRoute roles={['client','staff','editor','finance','admin']}>
+              <PortfolioPage inDashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* Transactions */}
+          <Route path="/dashboard/transactions" element={
+            <ProtectedRoute roles={['client','staff','finance','admin']}>
+              <TransactionsPage />
+            </ProtectedRoute>
           } />
 
           {/* Legacy /dashboard redirect → role-based */}

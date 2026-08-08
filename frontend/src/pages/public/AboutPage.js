@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBullseye, faEye, faHeart, faTrophy, faUsers, faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faBullseye, faEye, faHeart, faTrophy, faUsers, faChartLine, faUserCircle } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../components/layout/Layout';
 import usePageView from '../../hooks/usePageView';
 import api, { getImageUrl } from '../../api';
@@ -111,7 +111,7 @@ export default function AboutPage() {
                 <div className="about__team-avatar">
                   {m.avatar_url
                     ? <img src={getImageUrl(m.avatar_url)} alt={m.name} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover' }} />
-                    : <span style={{ fontSize: 48 }}>&#128100;</span>}
+                    : <FontAwesomeIcon icon={faUserCircle} style={{ fontSize: 72, color: 'var(--border)' }} />}
                 </div>
                 <h4>{m.name}</h4>
                 <span className="about__team-role">{m.role}</span>

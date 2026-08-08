@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendar, faUser, faMagnifyingGlass, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faUser, faMagnifyingGlass, faArrowRight, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../components/layout/Layout';
+import DashboardLayout from '../dashboard/DashboardLayout';
 import usePageView from '../../hooks/usePageView';
 import api, { getImageUrl } from '../../api';
 import './Blog.css';
@@ -19,7 +20,10 @@ const PLACEHOLDERS = [
   { slug:'branding-guide', title:'The Complete Branding Guide for Rwandan Startups', excerpt:'Everything you need to know about building a memorable brand identity from scratch.', author:'Admin', published_at:'2025-04-01' },
 ];
 
-export default function BlogPage() {
+export default function BlogPage({ inDashboard = false }) {
+  const Wrap = inDashboard
+    ? ({ children }) => <DashboardLayout pageTitle="Blog" pageSubtitle="Articles & insights">{children}</DashboardLayout>
+    : Layout;
   usePageView();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +42,7 @@ export default function BlogPage() {
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
-    <Layout>
+    <Wrap>
       <div className="page-hero">
         <div className="container">
           <span className="section-label">Resources</span>
@@ -66,9 +70,10 @@ export default function BlogPage() {
               <div className="blog-page__grid">
                 {paginated.map((post, i) => {
                   const CardEl = isPlaceholder ? 'div' : Link;
+                  const blogBase = inDashboard ? '/dashboard/blog' : '/blog';
                   const cardProps = isPlaceholder
                     ? { key: post.slug + i, className: 'blog-page__card card', style: { cursor: 'default' } }
-                    : { to: `/blog/${post.slug}`, key: post.slug + i, className: 'blog-page__card card' };
+                    : { to: `${blogBase}/${post.slug}`, key: post.slug + i, className: 'blog-page__card card' };
                   return (
                     <CardEl {...cardProps}>
                       <div className="blog-page__card-img" style={{ background: GRADIENTS[i % GRADIENTS.length] }}>
@@ -92,19 +97,19 @@ export default function BlogPage() {
               </div>
               {totalPages > 1 && (
                 <div className="portfolio-pagination" style={{ marginTop: 48 }}>
-                  <button className="page-btn" onClick={() => setPage(p => p - 1)} disabled={page === 1}>‹</button>
+                  <button className="page-btn" onClick={() => setPage(p => p - 1)} disabled={page === 1}><FontAwesomeIcon icon={faChevronLeft} /></button>
                   {[...Array(totalPages)].map((_, i) => (
                     <button key={i} className={`page-btn${page === i + 1 ? ' page-btn--active' : ''}`} onClick={() => setPage(i + 1)}>
                       {i + 1}
                     </button>
                   ))}
-                  <button className="page-btn" onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>›</button>
+                  <button className="page-btn" onClick={() => setPage(p => p + 1)} disabled={page === totalPages}><FontAwesomeIcon icon={faChevronRight} /></button>
                 </div>
               )}
             </>
           )}
         </div>
       </section>
-    </Layout>
+    </Wrap>
   );
 }
